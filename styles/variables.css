@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;1,400&family=IBM+Plex+Mono:wght@500&display=swap');
+
+:root {
+  /* Card dimensions */
+  --card-width: 63mm;
+  --card-height: 88mm;
+  --card-radius: 4mm;
+  --card-padding: 2mm;
+  --card-safe-zone: 5mm;
+
+  /* Typography - distinctive fonts */
+  --font-title: 'Josefin Sans', 'Futura', sans-serif;
+  --font-body: 'Josefin Sans', 'Futura', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Menlo', monospace;
+  --font-flavour: 'Crimson Pro', 'Palatino', serif;
+
+  --text-title: 13pt;
+  --text-body: 8pt;
+  --text-value: 9pt;
+  --text-flavour: 7.5pt;
+  --text-small: 6.5pt;
+
+  /* Base colors - warm paper tones */
+  --color-text: #1a1a1a;
+  --color-text-secondary: #4a4a4a;
+  --color-text-muted: #6a6a6a;
+  --color-bg: #fefcf8;
+  --color-bg-alt: #f5f0e8;
+  --color-border: #d4c9b8;
+  --color-border-dark: #a89880;
+
+  /* Accent gold */
+  --gold-primary: #c9a227;
+  --gold-secondary: #e8d48b;
+  --gold-dark: #8b7019;
+
+  /* Cambrian deck - deep ocean theme */
+  --cambrian-body: #0d3b66;
+  --cambrian-armour: #4a5568;
+  --cambrian-locomotion: #0e7c7b;
+  --cambrian-feeding: #9b2335;
+  --cambrian-respiration: #1e6091;
+  --cambrian-reproduction: #c65d3b;
+  --cambrian-special: #c9a227;
+
+  /* Human genetics - medical/biotech theme */
+  --human-sensory: #2563eb;
+  --human-digestive: #059669;
+  --human-metabolic: #d97706;
+  --human-cosmetic: #db2777;
+  --human-behavioural: #7c3aed;
+  --human-immunity: #dc2626;
+  --human-structural: #475569;
+  --human-special: #c9a227;
+
+  /* Era colors - geological strata inspired */
+  --era-arc: #1e293b;
+  --era-pro: #334155;
+  --era-cam: #4d7c0f;
+  --era-ord: #65a30d;
+  --era-sil: #7e22ce;
+  --era-dev: #92400e;
+  --era-car: #1e3a5f;
+  --era-per: #b91c1c;
+  --era-tri: #c2410c;
+  --era-jur: #0d9488;
+  --era-cre: #15803d;
+  --era-pal: #ca8a04;
+  --era-neo: #eab308;
+  --era-qua: #a8a29e;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
+
+  /* Spacing */
+  --space-xs: 1px;
+  --space-sm: 3px;
+  --space-md: 6px;
+  --space-lg: 12px;
+  --space-xl: 20px;
+
+  /* Rulebook */
+  --rulebook-max-width: 900px;
+  --nav-width: 220px;
+}

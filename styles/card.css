@@ -1,0 +1,378 @@
+/* Card base - premium paper feel */
+.card {
+  width: var(--card-width);
+  height: var(--card-height);
+  border-radius: var(--card-radius);
+  background: var(--color-bg);
+  background-image: 
+    linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%),
+    linear-gradient(to bottom, var(--color-bg) 0%, #f8f4ec 100%);
+  border: 1px solid var(--color-border);
+  box-shadow: 
+    var(--shadow-md),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  color: var(--color-text);
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Decorative corner flourishes */
+.card::before,
+.card::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--color-border-dark);
+  opacity: 0.4;
+}
+
+.card::before {
+  top: 4px;
+  left: 4px;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 3px 0 0 0;
+}
+
+.card::after {
+  bottom: 4px;
+  right: 4px;
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 3px 0;
+}
+
+/* Header - elegant with accent line */
+.card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  background: linear-gradient(to bottom, 
+    rgba(255,255,255,0.6) 0%, 
+    rgba(255,255,255,0) 100%);
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+
+.card__header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--gold-primary) 50%, 
+    transparent 100%);
+}
+
+.card__icon {
+  font-size: 20px;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+}
+
+.card__title {
+  font-family: var(--font-title);
+  font-size: var(--text-title);
+  font-weight: 700;
+  margin: 0;
+  flex: 1;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.card__number {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+  background: var(--color-bg-alt);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+/* Subtext (gene info) */
+.card__subtext {
+  font-size: var(--text-small);
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+  padding: var(--space-xs) var(--space-lg);
+  letter-spacing: 0.02em;
+}
+
+/* Illustration area - framed vintage style */
+.card__illustration {
+  flex: 1;
+  min-height: 28mm;
+  margin: var(--space-sm) var(--space-lg);
+  background: 
+    linear-gradient(to bottom, #e8e0d0 0%, #f0e8d8 100%);
+  border: 1px solid var(--color-border-dark);
+  border-radius: 2px;
+  box-shadow: 
+    inset 0 2px 4px rgba(0,0,0,0.1),
+    inset 0 -1px 0 rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.card__illustration::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 1px;
+}
+
+.card__illustration-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card__illustration-icon {
+  font-size: 42px;
+  opacity: 0.25;
+  filter: grayscale(30%);
+}
+
+/* Data section - clean tabular */
+.card__data {
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--color-bg-alt);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+}
+
+.card__row:not(:last-child) {
+  border-bottom: 1px dotted var(--color-border);
+}
+
+.card__label {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 32px;
+}
+
+.card__value {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--text-value);
+}
+
+.card__era {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  padding: 2px 6px;
+  border-radius: 2px;
+  color: white;
+  margin-left: auto;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.card__bar {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: -1px;
+  color: var(--gold-dark);
+}
+
+.card__dots {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--gold-primary);
+}
+
+.card__effect {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+/* Connections - subtle links */
+.card__connections {
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--text-small);
+  display: flex;
+  gap: var(--space-md);
+}
+
+.card__prereq,
+.card__enables {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card__prereq .card__label,
+.card__enables .card__label {
+  color: var(--color-text-muted);
+}
+
+/* Flavour text - italic wisdom */
+.card__flavour {
+  font-family: var(--font-flavour);
+  font-size: var(--text-flavour);
+  font-style: italic;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 0;
+  padding: var(--space-sm) var(--space-lg);
+  line-height: 1.3;
+}
+
+.card__flavour::before,
+.card__flavour::after {
+  content: '✦';
+  font-size: 5px;
+  vertical-align: middle;
+  margin: 0 4px;
+  color: var(--gold-secondary);
+}
+
+/* Footer - rich color bar */
+.card__footer {
+  padding: var(--space-sm) var(--space-lg);
+  text-align: center;
+  color: white;
+  font-size: var(--text-small);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  position: relative;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.card__footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.3) 50%,
+    transparent 100%);
+}
+
+.card__suit-name {
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Special card - golden treatment */
+.card--special {
+  border: 2px solid var(--gold-primary);
+  background-image:
+    linear-gradient(135deg, rgba(201,162,39,0.1) 0%, transparent 50%),
+    linear-gradient(to bottom, var(--color-bg) 0%, #faf6e8 100%);
+}
+
+.card--special::before,
+.card--special::after {
+  border-color: var(--gold-primary);
+  opacity: 0.6;
+}
+
+.card--special .card__illustration {
+  background: linear-gradient(135deg, #faf3d8 0%, #f0e4c0 100%);
+  border-color: var(--gold-primary);
+}
+
+/* Deck-specific header accents */
+.card--cambrian .card__header {
+  background: linear-gradient(to bottom,
+    rgba(13,59,102,0.08) 0%,
+    transparent 100%);
+}
+
+.card--cambrian .card__title {
+  color: var(--cambrian-body);
+}
+
+.card--human .card__header {
+  background: linear-gradient(to bottom,
+    rgba(37,99,235,0.06) 0%,
+    transparent 100%);
+}
+
+.card--human .card__title {
+  color: var(--human-sensory);
+}
+
+.card--evo .card__header {
+  background: linear-gradient(to bottom,
+    rgba(124,58,237,0.06) 0%,
+    transparent 100%);
+}
+
+.card--evo .card__title {
+  color: var(--human-behavioural);
+}
+
+/* Page wrapper for single card view */
+.card-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: 
+    radial-gradient(ellipse at top, #e8e4dc 0%, #d0c8b8 100%);
+  background-attachment: fixed;
+}
+
+.card-page .card {
+  transform: rotate(-0.5deg);
+  transition: transform 0.3s ease;
+}
+
+.card-page .card:hover {
+  transform: rotate(0deg) scale(1.02);
+}
+
+.card-meta {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.back-link {
+  font-family: var(--font-title);
+  color: var(--cambrian-body);
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 10px 20px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+}
+
+.back-link:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}

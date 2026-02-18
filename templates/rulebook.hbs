@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} - Phylogenius Rulebook</title>
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/rulebook.css">
+</head>
+<body class="rulebook">
+  <header class="rulebook__header">
+    <h1 class="rulebook__title">{{title}}</h1>
+    {{#if description}}
+    <p class="rulebook__description">{{description}}</p>
+    {{/if}}
+  </header>
+
+  {{> nav sections=sections currentSection=currentSection}}
+
+  <main class="rulebook__content">
+    {{{content}}}
+  </main>
+
+  <footer class="rulebook__footer">
+    <p>Phylogenius Card Game System</p>
+    {{#if prevSection}}
+    <a href="{{prevSection.href}}" class="rulebook__nav-link rulebook__nav-link--prev">
+      ← {{prevSection.title}}
+    </a>
+    {{/if}}
+    {{#if nextSection}}
+    <a href="{{nextSection.href}}" class="rulebook__nav-link rulebook__nav-link--next">
+      {{nextSection.title}} →
+    </a>
+    {{/if}}
+  </footer>
+</body>
+</html>
+

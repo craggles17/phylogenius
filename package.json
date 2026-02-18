@@ -1,0 +1,26 @@
+{
+  "name": "phylogenius",
+  "version": "1.0.0",
+  "description": "Card game generation system for evolutionary and genetics decks",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.js all",
+    "cards": "node scripts/build.js cards",
+    "rulebook": "node scripts/build.js rulebook",
+    "pdf": "node scripts/build.js pdf",
+    "dev": "node scripts/build.js dev",
+    "clean": "rm -rf dist/"
+  },
+  "dependencies": {
+    "handlebars": "^4.7.8",
+    "marked": "^12.0.0",
+    "puppeteer": "^22.0.0"
+  },
+  "devDependencies": {
+    "chokidar": "^3.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

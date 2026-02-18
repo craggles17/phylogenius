@@ -1,0 +1,90 @@
+<article class="card card--{{deckType}} card--{{type}}" data-suit="{{suit}}" data-id="{{id}}">
+  <header class="card__header">
+    <span class="card__icon" style="color: {{colors.primary}}">{{colors.icon}}</span>
+    <h2 class="card__title">{{trait}}</h2>
+    <span class="card__number">{{id}}</span>
+  </header>
+
+  {{#if gene}}
+  <div class="card__subtext">
+    Gene: {{gene}} {{#if rsid}}| {{rsid}}{{/if}}
+  </div>
+  {{/if}}
+
+  <div class="card__illustration">
+    <div class="card__illustration-placeholder">
+      <span class="card__illustration-icon">{{colors.icon}}</span>
+    </div>
+  </div>
+
+  <div class="card__data">
+    {{#if mya}}
+    <div class="card__row">
+      <span class="card__label">MYA:</span>
+      <span class="card__value">{{mya}}</span>
+      {{#if era}}
+      <span class="card__era" style="background: {{eraColor}}">{{era}}</span>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{#if globalPercent}}
+    <div class="card__row">
+      <span class="card__label">Freq:</span>
+      <span class="card__value">{{globalPercent}}%</span>
+      <span class="card__bar">{{frequencyBar globalPercent}}</span>
+    </div>
+    {{/if}}
+
+    {{#if clade}}
+    <div class="card__row">
+      <span class="card__label">Clade:</span>
+      <span class="card__value">{{clade}}</span>
+    </div>
+    {{/if}}
+
+    {{#if peak}}
+    <div class="card__row">
+      <span class="card__label">Peak:</span>
+      <span class="card__value">{{peak}}</span>
+    </div>
+    {{/if}}
+
+    {{#if h2}}
+    <div class="card__row">
+      <span class="card__label">h²:</span>
+      <span class="card__value">{{h2}}</span>
+      <span class="card__dots">{{heritabilityDots h2}}</span>
+    </div>
+    {{/if}}
+
+    {{#if effect}}
+    <div class="card__row">
+      <span class="card__label">Effect:</span>
+      <span class="card__value card__effect">{{effect}}</span>
+    </div>
+    {{/if}}
+  </div>
+
+  {{#if prereq}}
+  <div class="card__connections">
+    <div class="card__prereq">
+      <span class="card__label">Prereq:</span> {{prereq}}
+    </div>
+    {{#if enables}}
+    <div class="card__enables">
+      <span class="card__label">Enables:</span> {{enables}}
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  <blockquote class="card__flavour">
+    "{{flavour}}"
+  </blockquote>
+
+  <footer class="card__footer" style="background: {{colors.primary}}">
+    <span class="card__suit-name">{{suit}}</span>
+  </footer>
+</article>
+

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{deckTitle}} - Print Sheet {{sheetNumber}}</title>
+  <link rel="stylesheet" href="../styles/variables.css">
+  <link rel="stylesheet" href="../styles/card.css">
+  <link rel="stylesheet" href="../styles/print.css">
+</head>
+<body class="print-sheet">
+  <div class="sheet" data-sheet="{{sheetNumber}}">
+    <div class="sheet__grid">
+      {{#each cards}}
+      {{> card this}}
+      {{/each}}
+    </div>
+  </div>
+
+  {{#if hasMore}}
+  <div class="page-break"></div>
+  {{/if}}
+</body>
+</html>
+
