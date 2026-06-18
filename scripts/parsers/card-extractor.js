@@ -3,6 +3,7 @@
 import { extractTablesFromMarkdown, findCardTables } from './table-parser.js'
 import { getColorForSuit, getEraColor } from '../utils/color-utils.js'
 import { resolvePrereqIds } from './trait-aliases.js'
+import { TRAIT_DESCRIPTIONS } from './trait-descriptions.js'
 
 export function extractCardsFromMarkdown(markdown, deckType) {
   const tables = extractTablesFromMarkdown(markdown)
@@ -84,7 +85,8 @@ function buildTemporalCard(row, suit, deckType) {
     prereq,
     enables,
     colors,
-    flavour: generateFlavour(trait, mya)
+    flavour: generateFlavour(trait, mya),
+    description: TRAIT_DESCRIPTIONS[trait] || ''
   }
 }
 
@@ -115,7 +117,8 @@ function buildGeneticsCard(row, suit) {
     effect,
     h2,
     colors,
-    flavour: generateGeneticsFlavour(trait, gene)
+    flavour: generateGeneticsFlavour(trait, gene),
+    description: TRAIT_DESCRIPTIONS[trait] || ''
   }
 }
 
