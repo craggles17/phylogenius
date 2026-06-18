@@ -70,8 +70,10 @@ export function routeMode(app, deck, modeId, toMenu) {
 
     function endGame(won) {
         ended = true
+        // Remove the playfield so any pending mode timers (reveal/next-round) render
+        // into a detached node instead of leaking cards behind the end overlay.
         const playfield = app.querySelector('.game__play')
-        if (playfield) playfield.style.pointerEvents = 'none'
+        if (playfield) playfield.remove()
         const overlay = document.createElement('div')
         overlay.className = 'game__end'
         const title = document.createElement('h2')
