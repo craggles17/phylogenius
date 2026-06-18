@@ -27,3 +27,19 @@ test('cards.json excludes type:"special" cards from every deck', async () => {
     )
   }
 })
+
+test('no card has filler flavour text that leaks values', async () => {
+  await generateGameData()
+  const data = JSON.parse(await readFile('dist/game/cards.json', 'utf8'))
+  for (const id of ['evo', 'cambrian', 'human']) {
+    for (const card of data.decks[id].cards) {
+      if (card.flavour) {
+        assert.ok(
+          !card.flavour.includes('million years ago') &&
+          !card.flavour.includes('Encoded by'),
+          `${id}/${card.id}: flavour "${card.flavour}" contains filler text`
+        )
+      }
+    }
+  }
+})

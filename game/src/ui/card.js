@@ -54,7 +54,9 @@ export function renderCard(card, { faceDown = false, hideValue = false } = {}) {
     if (colors.primary) footer.style.background = colors.primary
 
     article.append(header, dataSection(card, { hideValue }))
-    if (card.flavour) article.append(el('blockquote', 'card__flavour', `"${card.flavour}"`))
+    if (card.flavour && !hideValue) {
+        article.append(el('blockquote', 'card__flavour', `"${card.flavour}"`))
+    }
     article.append(footer)
     return article
 }
