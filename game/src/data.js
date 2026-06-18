@@ -1,5 +1,7 @@
 // Deck loading, indexing, deterministic hand-dealing.
 
+import { compareByValue } from './engine/timeline.js'
+
 // Deterministic PRNG (mulberry32). Returns a function emitting [0,1).
 export function makeRng(seed) {
   let a = seed >>> 0
@@ -43,4 +45,16 @@ export function drawPlayableHand(deck, n, rng, canOpen) {
   const opener = openers[Math.floor(rng() * openers.length)]
   hand[Math.floor(rng() * hand.length)] = opener
   return hand
+}
+
+// Deal two distinct cards with nearby order-values so "which came first" is a genuine
+// close call rather than an obvious gap. Pure given rng: sort by value, pick a random
+// card, then a partner within `window` positions of it.
+export function drawClosePair(deck, rng, window = 4) {
+  const sorted = deck.cards.slice().sort((a, b) => compareByValue(a, b, deck))
+  if (sorted.length < 2) return sorted.slice(0, 2)
+  const i = Math.floor(rng() * (sorted.length - 1))
+  const span = Math.min(window, sorted.length - 1 - i)
+  const offset = 1 + Math.floor(rng() * span)
+  return [sorted[i], sorted[i + offset]]
 }
