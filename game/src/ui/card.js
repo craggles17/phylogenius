@@ -14,25 +14,25 @@ function dataRow(label, value, extra) {
     return row
 }
 
-function dataSection(card) {
+function dataSection(card, { hideValue = false } = {}) {
     const data = el('div', 'card__data')
     if (card.mya != null) {
         let era
         if (card.era) {
-            era = el('span', 'card__era', card.era)
-            if (card.eraColor) era.style.background = card.eraColor
+            era = el('span', 'card__era', hideValue ? '???' : card.era)
+            if (!hideValue && card.eraColor) era.style.background = card.eraColor
         }
-        data.append(dataRow('MYA:', String(card.mya), era))
+        data.append(dataRow('MYA:', hideValue ? '???' : String(card.mya), era))
     }
     if (card.globalPercent != null) {
-        data.append(dataRow('Freq:', `${card.globalPercent}%`))
+        data.append(dataRow('Freq:', hideValue ? '???' : `${card.globalPercent}%`))
     }
     if (card.clade) data.append(dataRow('Clade:', card.clade))
     if (card.peak) data.append(dataRow('Peak:', card.peak))
     return data
 }
 
-export function renderCard(card, { faceDown = false } = {}) {
+export function renderCard(card, { faceDown = false, hideValue = false } = {}) {
     const type = card.type || 'standard'
     const article = el('article', `card card--${card.deckType || ''} card--${type}`)
     article.dataset.suit = card.suit || ''
@@ -53,7 +53,7 @@ export function renderCard(card, { faceDown = false } = {}) {
     footer.append(el('span', 'card__suit-name', card.suit || ''))
     if (colors.primary) footer.style.background = colors.primary
 
-    article.append(header, dataSection(card))
+    article.append(header, dataSection(card, { hideValue }))
     if (card.flavour) article.append(el('blockquote', 'card__flavour', `"${card.flavour}"`))
     article.append(footer)
     return article
