@@ -186,16 +186,19 @@ for (const [deckId, modeId] of SCENARIOS) {
     })
 }
 
-test('human/whichcamefirst: game over after 3 wrong choices', async (t) => {
+test('evo/whichcamefirst: game over after losing all lives', async (t) => {
     if (!browser) return t.skip('Chromium could not launch in this environment')
 
     const page = await browser.newPage()
     try {
-        await startMode(page, baseUrl, 'human', 'whichcamefirst')
+        // Use the mya deck: close pairs there are near-continuous (few exact ties), so a
+        // wrong pick reliably costs a life. The percent deck has many tied values and ties
+        // never lose a life, which makes deliberately reaching game over unreliable.
+        await startMode(page, baseUrl, 'evo', 'whichcamefirst')
         const { compareByValue } = await import('../game/src/engine/timeline.js')
         const { readFile } = await import('node:fs/promises')
         const cardsData = JSON.parse(await readFile('dist/game/cards.json', 'utf8'))
-        const deck = cardsData.decks.human
+        const deck = cardsData.decks.evo
 
         // Click the genuinely-wrong card until lives run out. Tied values (cmp === 0)
         // have no wrong answer and cost no life, so loop with a cap rather than assuming
