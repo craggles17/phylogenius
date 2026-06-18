@@ -10,7 +10,7 @@ test('each mode default-exports a start function and imports cleanly in Node', a
     for (const mode of ['timeline', 'cladogram', 'memory', 'whichcamefirst']) {
         const mod = await import(`../game/src/modes/${mode}.js`)
         assert.equal(typeof mod.default, 'function', `${mode} must default-export start`)
-        assert.equal(mod.default.length, 3, `${mode} start(root, deck, onScore)`)
+        assert.ok(mod.default.length >= 3, `${mode} start(root, deck, onScore, opts?) has >=3 params`)
     }
 })
 

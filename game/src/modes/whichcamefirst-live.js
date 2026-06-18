@@ -2,7 +2,7 @@
 // Reuses renderCard, drawClosePair, compareByValue from solo mode.
 
 import { renderCard } from '../ui/card.js'
-import { drawClosePair, makeRng, getPairFact } from '../data.js'
+import { drawClosePair, makeRng, getPairFact, DIFFICULTY_WINDOWS } from '../data.js'
 import { compareByValue } from '../engine/timeline.js'
 import { analyzePairRelation } from '../engine/pair-relations.js'
 import {
@@ -33,7 +33,8 @@ function el(tag, className, text) {
 }
 
 // Host a live game: create room, show share link, deal rounds, collect votes, reveal.
-export async function hostLiveGame(root, deck, data, onMenu) {
+export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
+    const window = opts.window !== undefined ? opts.window : DIFFICULTY_WINDOWS.Medium
     const rng = makeRng(Date.now() >>> 0)
     const roomId = makeRoomId(rng)
     const shareUrl = roomLink(location.origin, location.pathname, roomId)
@@ -138,7 +139,7 @@ export async function hostLiveGame(root, deck, data, onMenu) {
 
     startBtn.addEventListener('click', () => {
         currentRound++
-        hand = drawClosePair(deck, rng)
+        hand = drawClosePair(deck, rng, window)
         votesByVoter = {}
         hostVoted = false
         renderRound()
@@ -154,7 +155,7 @@ export async function hostLiveGame(root, deck, data, onMenu) {
 
     nextBtn.addEventListener('click', () => {
         currentRound++
-        hand = drawClosePair(deck, rng)
+        hand = drawClosePair(deck, rng, window)
         votesByVoter = {}
         hostVoted = false
         factBox.style.display = 'none'

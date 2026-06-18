@@ -82,6 +82,60 @@ export function drawClosePair(deck, rng, window = 4) {
   return sorted.slice(0, 2)
 }
 
+// Difficulty -> closeness window mapping. Smaller window = closer values = harder.
+export const DIFFICULTY_WINDOWS = {
+  Easy: 10,
+  Medium: 5,
+  Hard: 2,
+}
+
+// Deal n cards with all distinct values (no ties) and bounded by window closeness.
+// Pure given rng. Analogous to drawClosePair but for n cards instead of 2.
+export function drawCloseHand(deck, n, rng, window = 4) {
+  if (deck.cards.length < n) return deck.cards.slice()
+  const sorted = deck.cards.slice().sort((a, b) => compareByValue(a, b, deck))
+  if (sorted.length < 2) return sorted.slice(0, n)
+
+  // Pick a random starting position that allows window room
+  const maxStart = Math.max(0, sorted.length - window)
+  const start = Math.floor(rng() * (maxStart + 1))
+  const windowEnd = Math.min(start + window, sorted.length)
+
+  // Collect distinct-value cards within window
+  const hand = []
+  const seen = new Set()
+  for (let i = start; i < windowEnd && hand.length < n; i++) {
+    const card = sorted[i]
+    const key = deck.valueType === 'mya' ? card.mya : card.globalPercent
+    if (!seen.has(key)) {
+      hand.push(card)
+      seen.add(key)
+    }
+  }
+
+  // If we need more cards, expand beyond window
+  if (hand.length < n) {
+    for (let i = windowEnd; i < sorted.length && hand.length < n; i++) {
+      const card = sorted[i]
+      const key = deck.valueType === 'mya' ? card.mya : card.globalPercent
+      if (!seen.has(key)) {
+        hand.push(card)
+        seen.add(key)
+      }
+    }
+    for (let i = start - 1; i >= 0 && hand.length < n; i--) {
+      const card = sorted[i]
+      const key = deck.valueType === 'mya' ? card.mya : card.globalPercent
+      if (!seen.has(key)) {
+        hand.push(card)
+        seen.add(key)
+      }
+    }
+  }
+
+  return hand
+}
+
 // Pure: given two cards and deck, return a fun fact about their relationship.
 // If the pair has an evolutionary relationship (prereq/enable/shared prereq), returns
 // that relationship fact. Otherwise, returns the flavour text from one of the cards

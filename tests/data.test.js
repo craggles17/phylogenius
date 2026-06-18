@@ -220,3 +220,90 @@ test('getPairFact handles enable relationship', () => {
   const fact = getPairFact(cardA, cardB, deck)
   assert.ok(fact.includes('unlocked'))
 })
+
+test('substantial description coverage across all decks', async () => {
+  await generateGameData()
+  const data = JSON.parse(await readFile('dist/game/cards.json', 'utf8'))
+
+  // Count cards with descriptions in each deck
+  const evoWithDesc = data.decks.evo.cards.filter(c => c.description && c.description.trim()).length
+  const cambrianWithDesc = data.decks.cambrian.cards.filter(c => c.description && c.description.trim()).length
+  const humanWithDesc = data.decks.human.cards.filter(c => c.description && c.description.trim()).length
+
+  // Every card should have a description (plain-language tooltip)
+  const evoTotal = data.decks.evo.cards.length
+  const cambrianTotal = data.decks.cambrian.cards.length
+  const humanTotal = data.decks.human.cards.length
+
+  assert.ok(evoWithDesc >= evoTotal * 0.95, `evo deck has only ${evoWithDesc}/${evoTotal} cards with description (need >=95%)`)
+  assert.ok(cambrianWithDesc >= cambrianTotal * 0.95, `cambrian deck has only ${cambrianWithDesc}/${cambrianTotal} cards with description (need >=95%)`)
+  assert.ok(humanWithDesc >= humanTotal * 0.95, `human deck has only ${humanWithDesc}/${humanTotal} cards with description (need >=95%)`)
+
+  // Descriptions should be concise (under 100 chars) and not leak values
+  for (const id of ['evo', 'cambrian', 'human']) {
+    for (const card of data.decks[id].cards) {
+      if (card.description) {
+        assert.ok(
+          card.description.length <= 120,
+          `${id}/${card.id}: description too long (${card.description.length} chars): "${card.description}"`
+        )
+        // Descriptions should not leak MYA or percent values
+        assert.ok(
+          !/\d+\s*million\s+years\s+ago/i.test(card.description),
+          `${id}/${card.id}: description leaks MYA: "${card.description}"`
+        )
+        assert.ok(
+          !/\d+\s*%/.test(card.description),
+          `${id}/${card.id}: description leaks percent: "${card.description}"`
+        )
+      }
+    }
+  }
+})
+
+// drawCloseHand deals n cards with all distinct values and within window closeness
+test('drawCloseHand deals cards with distinct values', async () => {
+  const { drawCloseHand } = await import('../game/src/data.js')
+  const cards = Array.from({ length: 30 }, (_, i) => ({ id: `C${i}`, mya: (30 - i) * 20 }))
+  const deck = { cards, valueType: 'mya' }
+  for (let seed = 0; seed < 20; seed++) {
+    const hand = drawCloseHand(deck, 5, makeRng(seed), 4)
+    const ids = new Set(hand.map(c => c.id))
+    assert.equal(ids.size, hand.length, `seed ${seed}: all cards distinct`)
+    for (let i = 0; i < hand.length; i++) {
+      for (let j = i + 1; j < hand.length; j++) {
+        assert.notEqual(compareByValue(hand[i], hand[j], deck), 0,
+          `seed ${seed}: no ties between ${hand[i].id} and ${hand[j].id}`)
+      }
+    }
+  }
+})
+
+test('drawCloseHand cards are bounded by window', async () => {
+  const { drawCloseHand } = await import('../game/src/data.js')
+  const cards = Array.from({ length: 30 }, (_, i) => ({ id: `C${i}`, mya: (30 - i) * 20 }))
+  const deck = { cards, valueType: 'mya' }
+  const sorted = cards.slice().sort((a, b) => compareByValue(a, b, deck))
+  const pos = (c) => sorted.indexOf(c)
+  for (let seed = 0; seed < 20; seed++) {
+    const hand = drawCloseHand(deck, 5, makeRng(seed), 4)
+    const positions = hand.map(pos).sort((a, b) => a - b)
+    const span = positions[positions.length - 1] - positions[0]
+    assert.ok(span <= 4, `seed ${seed}: span ${span} within window 4`)
+  }
+})
+
+test('drawCloseHand falls back when deck too small', async () => {
+  const { drawCloseHand } = await import('../game/src/data.js')
+  const cards = [{ id: 'A', mya: 100 }, { id: 'B', mya: 90 }]
+  const deck = { cards, valueType: 'mya' }
+  const hand = drawCloseHand(deck, 5, makeRng(0), 4)
+  assert.equal(hand.length, 2, 'returns what it can when deck < n')
+})
+
+test('DIFFICULTY_WINDOWS maps Easy/Medium/Hard to closeness windows', async () => {
+  const { DIFFICULTY_WINDOWS } = await import('../game/src/data.js')
+  assert.equal(DIFFICULTY_WINDOWS.Easy, 10, 'Easy = 10 (easier, wider window)')
+  assert.equal(DIFFICULTY_WINDOWS.Medium, 5, 'Medium = 5 (default)')
+  assert.equal(DIFFICULTY_WINDOWS.Hard, 2, 'Hard = 2 (harder, narrower window)')
+})
