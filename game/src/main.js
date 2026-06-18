@@ -5,6 +5,7 @@ import { loadDecks, getDeck } from './data.js'
 import { renderMenu } from './ui/menu.js'
 import { clearBoard } from './ui/board.js'
 import { createSession, addScore, loseLife } from './state.js'
+import { renderLegend, renderLegendToggle } from './ui/legend.js'
 import timeline from './modes/timeline.js'
 import cladogram from './modes/cladogram.js'
 import memory from './modes/memory.js'
@@ -14,10 +15,15 @@ import { roomIdFromSearch } from './multiplayer.js'
 
 const MODES = { timeline, cladogram, memory, whichcamefirst }
 
-function bar(session, onRestart) {
+function bar(session, onRestart, onMenu) {
     const el = document.createElement('div')
     el.className = 'game__bar'
+    const menu = Object.assign(document.createElement('button'), {
+        className: 'game__btn game__btn--back', textContent: '← Menu',
+    })
+    menu.addEventListener('click', onMenu)
     el.append(
+        menu,
         Object.assign(document.createElement('span'), {
             className: 'game__score', textContent: `Score: ${session.score}`,
         }),
@@ -39,12 +45,28 @@ export function routeMode(app, deck, modeId, toMenu) {
     let ended = false
     const start = MODES[modeId]
 
+    let legendVisible = false
+    const legendPanel = renderLegend()
+    legendPanel.style.display = 'none'
+    legendPanel.style.position = 'fixed'
+    legendPanel.style.top = '60px'
+    legendPanel.style.right = '10px'
+    legendPanel.style.zIndex = '1000'
+
+    const legendToggle = renderLegendToggle(() => {
+        legendVisible = !legendVisible
+        legendPanel.style.display = legendVisible ? 'block' : 'none'
+        legendToggle.textContent = legendVisible ? '📖 Hide' : '📖'
+    })
+
     function render() {
         clearBoard(app)
-        app.append(bar(session, toMenu))
+        const barEl = bar(session, () => { ended = true; toMenu() }, toMenu)
+        barEl.append(legendToggle)
+        app.append(barEl)
         const playfield = document.createElement('div')
         playfield.className = 'game__play'
-        app.append(playfield)
+        app.append(playfield, legendPanel)
         start(playfield, deck, (delta, opts = {}) => {
             if (ended) return
             const wasCorrect = delta > 0
@@ -60,7 +82,11 @@ export function routeMode(app, deck, modeId, toMenu) {
 
     function update() {
         const old = app.querySelector('.game__bar')
-        if (old) old.replaceWith(bar(session, toMenu))
+        if (old) {
+            const barEl = bar(session, () => { ended = true; toMenu() }, toMenu)
+            barEl.append(legendToggle)
+            old.replaceWith(barEl)
+        }
     }
 
     function flashFeedback(type) {
@@ -99,14 +125,6 @@ export async function boot(app) {
     const data = await loadDecks('./cards.json')
     const decks = Object.values(data.decks)
 
-    // Check if joining a live room via ?room=<id>
-    const roomId = roomIdFromSearch(location.search)
-    if (roomId) {
-        clearBoard(app)
-        joinLiveGame(app, roomId, data)
-        return
-    }
-
     function showMenu() {
         clearBoard(app)
         app.append(renderMenu({
@@ -114,7 +132,25 @@ export async function boot(app) {
             data,
             onStart: (modeId, deckId) =>
                 routeMode(app, getDeck(data, deckId), modeId, showMenu),
+            onMenu: showMenu,
         }))
+    }
+
+    // Check for direct mode/deck link ?mode=<id>&deck=<id>
+    const params = new URLSearchParams(location.search)
+    const modeId = params.get('mode')
+    const deckId = params.get('deck')
+    if (modeId && deckId && MODES[modeId] && data.decks[deckId]) {
+        routeMode(app, getDeck(data, deckId), modeId, showMenu)
+        return
+    }
+
+    // Check if joining a live room via ?room=<id>
+    const roomId = roomIdFromSearch(location.search)
+    if (roomId) {
+        clearBoard(app)
+        joinLiveGame(app, roomId, data, showMenu)
+        return
     }
 
     showMenu()

@@ -1,6 +1,7 @@
 // Menu: deck picker + mode buttons. Cladogram disabled when !deck.hasPrereqs.
 
 import { hostLiveGame } from '../modes/whichcamefirst-live.js'
+import { renderLegend, renderLegendToggle } from './legend.js'
 
 const MODES = [
     { id: 'timeline', label: 'Timeline' },
@@ -22,6 +23,9 @@ function deckPicker(decks) {
 }
 
 function modeButton(mode, deck, onStart) {
+    const wrapper = document.createElement('div')
+    wrapper.className = 'menu__mode-row'
+
     const btn = document.createElement('button')
     btn.className = 'menu__mode'
     btn.dataset.mode = mode.id
@@ -32,10 +36,24 @@ function modeButton(mode, deck, onStart) {
     } else {
         btn.addEventListener('click', () => onStart(mode.id, deck.id))
     }
-    return btn
+
+    const shareBtn = document.createElement('button')
+    shareBtn.className = 'menu__share'
+    shareBtn.textContent = '🔗'
+    shareBtn.title = 'Copy link'
+    shareBtn.addEventListener('click', () => {
+        const url = `${location.origin}${location.pathname}?mode=${mode.id}&deck=${deck.id}`
+        navigator.clipboard.writeText(url).then(() => {
+            shareBtn.textContent = '✓'
+            setTimeout(() => { shareBtn.textContent = '🔗' }, 1000)
+        })
+    })
+
+    wrapper.append(btn, shareBtn)
+    return wrapper
 }
 
-export function renderMenu({ decks, data, onStart }) {
+export function renderMenu({ decks, data, onStart, onMenu }) {
     const root = document.createElement('div')
     root.className = 'menu'
     root.append(Object.assign(document.createElement('h1'), { className: 'menu__title', textContent: 'Phylogenius Puzzles' }))
@@ -46,6 +64,16 @@ export function renderMenu({ decks, data, onStart }) {
     const buttons = document.createElement('div')
     buttons.className = 'menu__modes'
     const byId = Object.fromEntries(decks.map((d) => [d.id, d]))
+
+    let legendVisible = false
+    const legendPanel = renderLegend()
+    legendPanel.style.display = 'none'
+
+    const legendToggle = renderLegendToggle(() => {
+        legendVisible = !legendVisible
+        legendPanel.style.display = legendVisible ? 'block' : 'none'
+        legendToggle.textContent = legendVisible ? '📖 Hide Legend' : '📖 Legend'
+    })
 
     function render() {
         buttons.replaceChildren()
@@ -58,13 +86,13 @@ export function renderMenu({ decks, data, onStart }) {
         liveBtn.textContent = 'Host Live Vote'
         liveBtn.addEventListener('click', () => {
             root.replaceChildren()
-            hostLiveGame(root, deck, data)
+            hostLiveGame(root, deck, data, onMenu)
         })
         buttons.append(liveBtn)
     }
 
     select.addEventListener('change', render)
     render()
-    root.append(buttons)
+    root.append(buttons, legendToggle, legendPanel)
     return root
 }
