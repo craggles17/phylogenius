@@ -3,7 +3,7 @@
 // score based on correctness. Correct → +1, wrong → lose a life.
 
 import { renderCard } from '../ui/card.js'
-import { drawHand, makeRng } from '../data.js'
+import { drawClosePair, makeRng } from '../data.js'
 import { compareByValue } from '../engine/timeline.js'
 
 const PROMPT_TEXT = {
@@ -14,7 +14,7 @@ const ROUNDS = 10
 
 export default function start(root, deck, onScore) {
     const rng = makeRng(Date.now() >>> 0)
-    let hand = drawHand(deck, 2, rng)
+    let hand = drawClosePair(deck, rng)
     let roundsCompleted = 0
     let ended = false
 
@@ -29,7 +29,7 @@ export default function start(root, deck, onScore) {
 
     function nextRound() {
         if (ended) return
-        hand = drawHand(deck, 2, rng)
+        hand = drawClosePair(deck, rng)
         renderChoices()
     }
 
