@@ -7,7 +7,7 @@ import { readFile } from 'node:fs/promises'
 // must be self-contained: same-dir styles/ links and a ./cards.json fetch.
 
 test('each mode default-exports a start function and imports cleanly in Node', async () => {
-    for (const mode of ['timeline', 'cladogram', 'memory']) {
+    for (const mode of ['timeline', 'cladogram', 'memory', 'whichcamefirst']) {
         const mod = await import(`../game/src/modes/${mode}.js`)
         assert.equal(typeof mod.default, 'function', `${mode} must default-export start`)
         assert.equal(mod.default.length, 3, `${mode} start(root, deck, onScore)`)
@@ -18,7 +18,7 @@ test('main.js imports cleanly in Node (DOM-guarded) and routes modes', async () 
     const main = await import('../game/src/main.js')
     assert.equal(typeof main.routeMode, 'function')
     const src = await readFile('game/src/main.js', 'utf8')
-    for (const mode of ['timeline', 'cladogram', 'memory']) {
+    for (const mode of ['timeline', 'cladogram', 'memory', 'whichcamefirst']) {
         assert.ok(src.includes(`modes/${mode}.js`), `main wires modes/${mode}.js`)
     }
     assert.ok(src.includes('loadDecks'), 'main loads decks')
