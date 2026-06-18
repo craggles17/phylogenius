@@ -1,0 +1,126 @@
+/* Game chrome. Reuses design tokens from variables.css (card.css covers cards). */
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-body);
+    color: var(--color-text);
+    background: radial-gradient(ellipse at top, #e8e4dc 0%, #d0c8b8 100%);
+    background-attachment: fixed;
+}
+
+#app {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: var(--space-xl);
+}
+
+/* Menu */
+.menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-xl) 0;
+}
+
+.menu__title {
+    font-family: var(--font-title);
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--cambrian-body);
+}
+
+.menu__deck {
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: var(--space-md) var(--space-lg);
+    border: 1px solid var(--color-border-dark);
+    border-radius: 4px;
+    background: white;
+}
+
+.menu__modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    justify-content: center;
+}
+
+.menu__mode,
+.game__btn {
+    font-family: var(--font-title);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: var(--space-md) var(--space-xl);
+    border: 1px solid var(--color-border-dark);
+    border-radius: 4px;
+    background: white;
+    color: var(--cambrian-body);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.menu__mode:hover:not(:disabled),
+.game__btn:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.menu__mode:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Session header: score, lives, restart */
+.game__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-md) 0;
+    font-family: var(--font-mono);
+}
+
+.game__score,
+.game__lives {
+    font-weight: 500;
+}
+
+/* Layout: hand + board */
+.game__hand,
+.game__board {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    padding: var(--space-lg) 0;
+}
+
+.game__hand .card,
+.game__board .card {
+    transform: scale(0.9);
+    transform-origin: top left;
+    cursor: grab;
+}
+
+.card.is-dragging {
+    opacity: 0.5;
+}
+
+.is-over {
+    outline: 2px dashed var(--gold-primary);
+    outline-offset: 4px;
+}
+
+/* Face-down card back */
+.card--back {
+    align-items: center;
+    justify-content: center;
+    background-image: linear-gradient(135deg, var(--cambrian-body) 0%, var(--cambrian-respiration) 100%);
+    color: white;
+}
+
+.card--back .card__icon {
+    font-size: 48px;
+    opacity: 0.6;
+}
