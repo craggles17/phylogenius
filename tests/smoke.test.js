@@ -90,13 +90,36 @@ async function scoreMemory(page) {
     }, { timeout: 4000 })
 }
 
+// Which Came First: read the two choice cards, look up their values in cards.json,
+// compute the correct one using compareByValue, and click it.
+async function scoreWhichCameFirst(page, deckId) {
+    const { compareByValue } = await import('../game/src/engine/timeline.js')
+    const { readFile } = await import('node:fs/promises')
+    const cardsData = JSON.parse(await readFile('dist/game/cards.json', 'utf8'))
+    const deck = cardsData.decks[deckId]
+
+    const [id1, id2] = await page.$$eval('.game__play .card', (els) =>
+        els.map((e) => e.dataset.id)
+    )
+    assert.ok(id1 && id2, 'expected two choice cards')
+    assert.notEqual(id1, id2, 'expected distinct cards')
+
+    const card1 = deck.cards.find((c) => c.id === id1)
+    const card2 = deck.cards.find((c) => c.id === id2)
+    assert.ok(card1 && card2, 'expected both cards in deck')
+
+    const cmp = compareByValue(card1, card2, deck)
+    const correctId = cmp <= 0 ? id1 : id2
+    await page.click(`.game__play .card[data-id="${correctId}"]`)
+}
+
 // Timeline scores by dropping onto a slot; cladogram onto the whole tree board.
 const DROP_ZONE = { timeline: '.game__slot', cladogram: '.game__board' }
 
 const SCENARIOS = [
-    ['evo', 'timeline'], ['evo', 'cladogram'], ['evo', 'memory'],
-    ['cambrian', 'timeline'], ['cambrian', 'cladogram'], ['cambrian', 'memory'],
-    ['human', 'timeline'], ['human', 'memory'], // Cladogram skipped: human has no prereqs
+    ['evo', 'timeline'], ['evo', 'cladogram'], ['evo', 'memory'], ['evo', 'whichcamefirst'],
+    ['cambrian', 'timeline'], ['cambrian', 'cladogram'], ['cambrian', 'memory'], ['cambrian', 'whichcamefirst'],
+    ['human', 'timeline'], ['human', 'memory'], ['human', 'whichcamefirst'], // Cladogram skipped: human has no prereqs
 ]
 
 let server
@@ -130,6 +153,7 @@ for (const [deckId, modeId] of SCENARIOS) {
             assert.equal(await scoreOf(page), 0, 'fresh session starts at 0')
 
             if (modeId === 'memory') await scoreMemory(page)
+            else if (modeId === 'whichcamefirst') await scoreWhichCameFirst(page, deckId)
             else await scoreDragMode(page, DROP_ZONE[modeId])
             assert.ok(await scoreOf(page) > 0, 'visible score updates after a valid move')
 
