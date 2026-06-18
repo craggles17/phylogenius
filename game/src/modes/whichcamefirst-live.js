@@ -73,7 +73,7 @@ export async function hostLiveGame(root, deck, data) {
         votesByVoter = {}
         hostVoted = false
         renderRound()
-        hub.broadcast({ t: 'round', round: currentRound, cardIds: hand.map((c) => c.id), prompt: prompt.textContent })
+        hub.broadcast({ t: 'round', round: currentRound, deckId: deck.id, cardIds: hand.map((c) => c.id), prompt: prompt.textContent })
         startBtn.textContent = 'Next Round'
         revealBtn.disabled = false
     })
@@ -166,10 +166,13 @@ export async function joinLiveGame(root, roomId, data) {
     }
 
     let currentRound = 0
+    let currentDeckId = null
     let voted = false
+    const deckCards = () => (currentDeckId && data.decks[currentDeckId]?.cards) || []
 
     function handleRound(msg) {
         currentRound = msg.round
+        currentDeckId = msg.deckId
         voted = false
         prompt.textContent = msg.prompt
         choices.replaceChildren()
@@ -177,7 +180,7 @@ export async function joinLiveGame(root, roomId, data) {
         status.textContent = 'Vote for your answer:'
 
         for (const cardId of msg.cardIds) {
-            const card = data.cards.find((c) => c.id === cardId)
+            const card = deckCards().find((c) => c.id === cardId)
             if (!card) continue
             const cardEl = renderCard(card, { hideValue: true })
             cardEl.style.cursor = 'pointer'
@@ -199,7 +202,7 @@ export async function joinLiveGame(root, roomId, data) {
 
         for (const cardEl of cards) {
             const cardId = cardEl.dataset.id
-            const card = data.cards.find((c) => c.id === cardId)
+            const card = deckCards().find((c) => c.id === cardId)
             if (!card) continue
 
             const revealed = renderCard(card)
@@ -215,7 +218,7 @@ export async function joinLiveGame(root, roomId, data) {
 
         tally.replaceChildren()
         for (const cardId in msg.tally) {
-            const card = data.cards.find((c) => c.id === cardId)
+            const card = deckCards().find((c) => c.id === cardId)
             if (!card) continue
             const count = msg.tally[cardId]
             const bar = el('div', 'live__vote-bar')
