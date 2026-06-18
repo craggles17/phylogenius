@@ -161,7 +161,7 @@ function generateFlavour(trait, mya) {
     'Eyes': 'The world snapped into focus',
     'Lungs': 'Taking the first breath of fresh air'
   }
-  return flavours[trait] || `Evolved ${mya} million years ago`
+  return flavours[trait] || ''
 }
 
 function generateGeneticsFlavour(trait, gene) {
@@ -171,7 +171,7 @@ function generateGeneticsFlavour(trait, gene) {
     'Red Hair': 'Kissed by fire',
     'Blue Eyes': 'A single mutation, 10,000 years ago'
   }
-  return flavours[trait] || `Encoded by ${gene}`
+  return flavours[trait] || ''
 }
 
 export function groupCardsBySuit(cards) {

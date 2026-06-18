@@ -168,3 +168,34 @@ for (const [deckId, modeId] of SCENARIOS) {
         }
     })
 }
+
+test('human/whichcamefirst: game over after 3 wrong choices', async (t) => {
+    if (!browser) return t.skip('Chromium could not launch in this environment')
+
+    const page = await browser.newPage()
+    try {
+        await startMode(page, baseUrl, 'human', 'whichcamefirst')
+        const { compareByValue } = await import('../game/src/engine/timeline.js')
+        const { readFile } = await import('node:fs/promises')
+        const cardsData = JSON.parse(await readFile('dist/game/cards.json', 'utf8'))
+        const deck = cardsData.decks.human
+
+        for (let i = 0; i < 3; i++) {
+            const [id1, id2] = await page.$$eval('.game__play .card', (els) =>
+                els.map((e) => e.dataset.id)
+            )
+            const card1 = deck.cards.find((c) => c.id === id1)
+            const card2 = deck.cards.find((c) => c.id === id2)
+            const cmp = compareByValue(card1, card2, deck)
+            const wrongId = cmp <= 0 ? id2 : id1
+            await page.click(`.game__play .card[data-id="${wrongId}"]`)
+            await page.waitForTimeout(1300)
+        }
+
+        await page.waitForSelector('.game__end', { timeout: 2000 })
+        const endText = await page.$eval('.game__end', (e) => e.textContent)
+        assert.ok(endText.includes('Game Over'), 'expected Game Over overlay')
+    } finally {
+        await page.close()
+    }
+})
