@@ -105,6 +105,17 @@ body {
     50% { background: rgba(245, 101, 101, 0.2); }
 }
 
+/* Which Came First: two-choice horizontal layout */
+.game__choices {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: var(--space-xl);
+    padding: var(--space-lg) 0;
+    flex-wrap: wrap;
+}
+
 /* Layout: hand + board */
 .game__hand,
 .game__board {
