@@ -14,7 +14,7 @@ static, in-browser solo puzzle game.
 
 ## Play in browser
 
-A static, no-framework, no-bundler puzzle game over all three decks. Three modes:
+A static, no-framework, no-bundler puzzle game over all three decks. Four modes:
 
 - **Timeline** — drop cards into the correct order (oldest→newest for mya decks,
   rarest→most-common for the human deck).
@@ -22,6 +22,8 @@ A static, no-framework, no-bundler puzzle game over all three decks. Three modes
   prerequisites are on the tree and it is later than its parents. Available for the Evo and
   Cambrian decks (the Human deck has no prerequisites).
 - **Memory Match** — flip tiles to find pairs that share a suit, value band, or clade.
+- **Which Came First** — a quick pairwise quiz: pick which of two cards came first (or is
+  rarer for the human deck). Correct → +1, wrong → lose a life.
 
 ### Run it
 
