@@ -4,6 +4,7 @@ const MODES = [
     { id: 'timeline', label: 'Timeline' },
     { id: 'cladogram', label: 'Cladogram Builder' },
     { id: 'memory', label: 'Memory Match' },
+    { id: 'whichcamefirst', label: 'Which Came First' },
 ]
 
 function deckPicker(decks) {

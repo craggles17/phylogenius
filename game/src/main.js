@@ -8,8 +8,9 @@ import { createSession, addScore, loseLife } from './state.js'
 import timeline from './modes/timeline.js'
 import cladogram from './modes/cladogram.js'
 import memory from './modes/memory.js'
+import whichcamefirst from './modes/whichcamefirst.js'
 
-const MODES = { timeline, cladogram, memory }
+const MODES = { timeline, cladogram, memory, whichcamefirst }
 
 function bar(session, onRestart) {
     const el = document.createElement('div')
