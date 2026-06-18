@@ -116,6 +116,36 @@ body {
     flex-wrap: wrap;
 }
 
+/* Winner/loser visual treatment */
+.card--winner {
+    position: relative;
+    outline: 3px solid #48bb78;
+    outline-offset: 4px;
+    box-shadow: 0 0 16px rgba(72, 187, 120, 0.4);
+}
+
+.card--loser {
+    opacity: 0.6;
+}
+
+.card__winner-label {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #48bb78;
+    color: white;
+    font-family: var(--font-title);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+}
+
 /* Layout: hand + board */
 .game__hand,
 .game__board {

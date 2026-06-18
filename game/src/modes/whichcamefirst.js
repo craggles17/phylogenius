@@ -49,9 +49,23 @@ export default function start(root, deck, onScore) {
         const cmp = compareByValue(picked, other, deck)
         const correct = cmp <= 0
 
+        // Determine which card actually came first (or was rarer)
+        const winnerCard = compareByValue(hand[0], hand[1], deck) <= 0 ? hand[0] : hand[1]
+        const loserCard = hand[0] === winnerCard ? hand[1] : hand[0]
+
         choices.replaceChildren()
         for (const card of hand) {
-            choices.append(renderCard(card))
+            const el = renderCard(card)
+            if (card === winnerCard) {
+                el.classList.add('card--winner')
+                const label = document.createElement('div')
+                label.className = 'card__winner-label'
+                label.textContent = deck.valueType === 'percent' ? 'Rarer' : 'Came first'
+                el.appendChild(label)
+            } else {
+                el.classList.add('card--loser')
+            }
+            choices.append(el)
         }
 
         roundsCompleted++
