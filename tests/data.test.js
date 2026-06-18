@@ -60,3 +60,33 @@ test('no card has filler flavour text that leaks values', async () => {
     }
   }
 })
+
+test('substantial fun fact coverage across all decks', async () => {
+  await generateGameData()
+  const data = JSON.parse(await readFile('dist/game/cards.json', 'utf8'))
+
+  // Each deck should have at least 15 cards with non-empty flavour text
+  const evoWithFlavour = data.decks.evo.cards.filter(c => c.flavour && c.flavour.trim()).length
+  const cambrianWithFlavour = data.decks.cambrian.cards.filter(c => c.flavour && c.flavour.trim()).length
+  const humanWithFlavour = data.decks.human.cards.filter(c => c.flavour && c.flavour.trim()).length
+
+  assert.ok(evoWithFlavour >= 15, `evo deck has only ${evoWithFlavour} cards with flavour (need >=15)`)
+  assert.ok(cambrianWithFlavour >= 15, `cambrian deck has only ${cambrianWithFlavour} cards with flavour (need >=15)`)
+  assert.ok(humanWithFlavour >= 15, `human deck has only ${humanWithFlavour} cards with flavour (need >=15)`)
+
+  // No flavour should contain number + "million years ago" or a percentage leak
+  for (const id of ['evo', 'cambrian', 'human']) {
+    for (const card of data.decks[id].cards) {
+      if (card.flavour) {
+        assert.ok(
+          !/\d+\s*million\s+years\s+ago/i.test(card.flavour),
+          `${id}/${card.id}: flavour leaks MYA: "${card.flavour}"`
+        )
+        assert.ok(
+          !/\d+\s*%/.test(card.flavour),
+          `${id}/${card.id}: flavour leaks percent: "${card.flavour}"`
+        )
+      }
+    }
+  }
+})
