@@ -9,6 +9,8 @@ import timeline from './modes/timeline.js'
 import cladogram from './modes/cladogram.js'
 import memory from './modes/memory.js'
 import whichcamefirst from './modes/whichcamefirst.js'
+import { joinLiveGame } from './modes/whichcamefirst-live.js'
+import { roomIdFromSearch } from './multiplayer.js'
 
 const MODES = { timeline, cladogram, memory, whichcamefirst }
 
@@ -97,10 +99,19 @@ export async function boot(app) {
     const data = await loadDecks('./cards.json')
     const decks = Object.values(data.decks)
 
+    // Check if joining a live room via ?room=<id>
+    const roomId = roomIdFromSearch(location.search)
+    if (roomId) {
+        clearBoard(app)
+        joinLiveGame(app, roomId, data)
+        return
+    }
+
     function showMenu() {
         clearBoard(app)
         app.append(renderMenu({
             decks,
+            data,
             onStart: (modeId, deckId) =>
                 routeMode(app, getDeck(data, deckId), modeId, showMenu),
         }))

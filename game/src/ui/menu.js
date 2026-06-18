@@ -1,4 +1,6 @@
-// Menu: deck picker + 3 mode buttons. Cladogram disabled when !deck.hasPrereqs.
+// Menu: deck picker + mode buttons. Cladogram disabled when !deck.hasPrereqs.
+
+import { hostLiveGame } from '../modes/whichcamefirst-live.js'
 
 const MODES = [
     { id: 'timeline', label: 'Timeline' },
@@ -33,7 +35,7 @@ function modeButton(mode, deck, onStart) {
     return btn
 }
 
-export function renderMenu({ decks, onStart }) {
+export function renderMenu({ decks, data, onStart }) {
     const root = document.createElement('div')
     root.className = 'menu'
     root.append(Object.assign(document.createElement('h1'), { className: 'menu__title', textContent: 'Phylogenius Puzzles' }))
@@ -49,6 +51,16 @@ export function renderMenu({ decks, onStart }) {
         buttons.replaceChildren()
         const deck = byId[select.value]
         for (const mode of MODES) buttons.append(modeButton(mode, deck, onStart))
+
+        // Add "Host Live Vote" button
+        const liveBtn = document.createElement('button')
+        liveBtn.className = 'menu__mode menu__mode--live'
+        liveBtn.textContent = 'Host Live Vote'
+        liveBtn.addEventListener('click', () => {
+            root.replaceChildren()
+            hostLiveGame(root, deck, data)
+        })
+        buttons.append(liveBtn)
     }
 
     select.addEventListener('change', render)
