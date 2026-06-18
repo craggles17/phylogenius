@@ -1,6 +1,7 @@
 // Deck loading, indexing, deterministic hand-dealing.
 
 import { compareByValue } from './engine/timeline.js'
+import { analyzePairRelation } from './engine/pair-relations.js'
 
 // Deterministic PRNG (mulberry32). Returns a function emitting [0,1).
 export function makeRng(seed) {
@@ -48,13 +49,61 @@ export function drawPlayableHand(deck, n, rng, canOpen) {
 }
 
 // Deal two distinct cards with nearby order-values so "which came first" is a genuine
-// close call rather than an obvious gap. Pure given rng: sort by value, pick a random
-// card, then a partner within `window` positions of it.
+// close call rather than an obvious gap. NEVER deals two cards with equal value (no
+// ties — every pair must have a definite earlier card). Pure given rng: sort by value,
+// pick a random card, then a partner within `window` positions of it that has a
+// strictly different value.
 export function drawClosePair(deck, rng, window = 4) {
   const sorted = deck.cards.slice().sort((a, b) => compareByValue(a, b, deck))
   if (sorted.length < 2) return sorted.slice(0, 2)
   const i = Math.floor(rng() * (sorted.length - 1))
   const span = Math.min(window, sorted.length - 1 - i)
-  const offset = 1 + Math.floor(rng() * span)
-  return [sorted[i], sorted[i + offset]]
+  // Find first offset where the value strictly differs
+  for (let offset = 1; offset <= span; offset++) {
+    const candidate = sorted[i + offset]
+    if (compareByValue(sorted[i], candidate, deck) !== 0) {
+      return [sorted[i], candidate]
+    }
+  }
+  // If all cards in the window have equal value, expand search beyond window
+  for (let offset = span + 1; offset < sorted.length - i; offset++) {
+    const candidate = sorted[i + offset]
+    if (compareByValue(sorted[i], candidate, deck) !== 0) {
+      return [sorted[i], candidate]
+    }
+  }
+  // Fallback: search backwards if needed
+  for (let j = i - 1; j >= 0; j--) {
+    if (compareByValue(sorted[j], sorted[i], deck) !== 0) {
+      return [sorted[j], sorted[i]]
+    }
+  }
+  // If the entire deck has identical values, return the first two distinct cards by id
+  return sorted.slice(0, 2)
+}
+
+// Pure: given two cards and deck, return a fun fact about their relationship.
+// If the pair has an evolutionary relationship (prereq/enable/shared prereq), returns
+// that relationship fact. Otherwise, returns the flavour text from one of the cards
+// (prefers the earlier card if both have flavour).
+export function getPairFact(cardA, cardB, deck) {
+  const relation = analyzePairRelation(cardA, cardB, deck)
+
+  // Prefer pair-specific relationship facts
+  if (relation.related && relation.fact) {
+    return relation.fact
+  }
+
+  // Fallback to individual card flavour
+  // Sort by value to prefer earlier card's fact
+  const sorted = compareByValue(cardA, cardB, deck) <= 0
+    ? [cardA, cardB]
+    : [cardB, cardA]
+
+  for (const card of sorted) {
+    if (card.flavour) return card.flavour
+  }
+
+  // Ultimate fallback
+  return relation.fact || 'Two fascinating evolutionary innovations!'
 }
