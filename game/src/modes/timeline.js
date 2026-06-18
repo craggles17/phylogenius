@@ -39,7 +39,7 @@ export default function start(root, deck, onScore) {
         hand.splice(hand.indexOf(card), 1)
         renderHand()
         renderBoard()
-        onScore(1)
+        onScore(1, hand.length === 0 ? { win: true } : {})
     }
 
     function slot(index) {

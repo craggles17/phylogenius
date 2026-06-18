@@ -189,7 +189,7 @@ test('human/whichcamefirst: game over after 3 wrong choices', async (t) => {
             const cmp = compareByValue(card1, card2, deck)
             const wrongId = cmp <= 0 ? id2 : id1
             await page.click(`.game__play .card[data-id="${wrongId}"]`)
-            await page.waitForTimeout(1300)
+            await new Promise((r) => setTimeout(r, 1300))
         }
 
         await page.waitForSelector('.game__end', { timeout: 2000 })
