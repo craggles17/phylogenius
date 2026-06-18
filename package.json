@@ -9,6 +9,10 @@
     "rulebook": "node scripts/build.js rulebook",
     "pdf": "node scripts/build.js pdf",
     "dev": "node scripts/build.js dev",
+    "data": "node scripts/build.js data",
+    "game": "node scripts/build.js data && node scripts/build.js serve",
+    "serve": "node scripts/build.js serve",
+    "test": "node --test \"tests/**/*.test.js\"",
     "clean": "rm -rf dist/"
   },
   "dependencies": {
