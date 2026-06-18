@@ -87,6 +87,65 @@ body {
     font-weight: 500;
 }
 
+.game__bar--correct {
+    animation: flash-correct 0.4s ease-out;
+}
+
+.game__bar--wrong {
+    animation: flash-wrong 0.4s ease-out;
+}
+
+@keyframes flash-correct {
+    0%, 100% { background: transparent; }
+    50% { background: rgba(72, 187, 120, 0.2); }
+}
+
+@keyframes flash-wrong {
+    0%, 100% { background: transparent; }
+    50% { background: rgba(245, 101, 101, 0.2); }
+}
+
+/* Which Came First: two-choice horizontal layout */
+.game__choices {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: var(--space-xl);
+    padding: var(--space-lg) 0;
+    flex-wrap: wrap;
+}
+
+/* Winner/loser visual treatment */
+.card--winner {
+    position: relative;
+    outline: 3px solid #48bb78;
+    outline-offset: 4px;
+    box-shadow: 0 0 16px rgba(72, 187, 120, 0.4);
+}
+
+.card--loser {
+    opacity: 0.6;
+}
+
+.card__winner-label {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #48bb78;
+    color: white;
+    font-family: var(--font-title);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+}
+
 /* Layout: hand + board */
 .game__hand,
 .game__board {
@@ -123,4 +182,159 @@ body {
 .card--back .card__icon {
     font-size: 48px;
     opacity: 0.6;
+}
+
+/* End game overlay */
+.game__end {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-lg);
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    animation: fade-in 0.3s ease-out;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.game__end-title {
+    font-family: var(--font-title);
+    font-size: 48px;
+    letter-spacing: -0.02em;
+    color: white;
+    margin: 0;
+}
+
+.game__end-score {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+/* Live voting room */
+.live__panel {
+    background: white;
+    border: 1px solid var(--color-border-dark);
+    border-radius: 8px;
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.live__label {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.live__link {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-bg);
+    cursor: pointer;
+    width: 100%;
+}
+
+.live__link:focus {
+    outline: 2px solid var(--cambrian-body);
+    outline-offset: 2px;
+}
+
+.live__voters {
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--color-text-subtle);
+    margin: 0;
+}
+
+.live__status {
+    font-family: var(--font-body);
+    font-size: 14px;
+    text-align: center;
+    color: var(--color-text-subtle);
+    margin: var(--space-md) 0;
+}
+
+.live__error {
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: #c41e3a;
+    text-align: center;
+    padding: var(--space-lg);
+    background: #fff5f5;
+    border: 1px solid #faa;
+    border-radius: 4px;
+}
+
+.live__tally {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+}
+
+.live__vote-bar {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    padding: var(--space-sm) var(--space-md);
+    background: linear-gradient(to right, var(--cambrian-body) 0%, rgba(108, 145, 143, 0.3) 100%);
+    color: white;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    min-width: 120px;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        color: var(--color-text-dark);
+        background: radial-gradient(ellipse at top, #2a2520 0%, #1a1815 100%);
+    }
+
+    .live__panel {
+        background: #2a2520;
+        border-color: #4a4540;
+    }
+
+    .live__link {
+        background: #1a1815;
+        color: #e8e4dc;
+        border-color: #4a4540;
+    }
+
+    .live__label,
+    .live__status {
+        color: #d0c8b8;
+    }
+
+    .live__voters {
+        color: #a8a098;
+    }
+
+    .live__error {
+        background: #3a1a1a;
+        border-color: #6a3a3a;
+        color: #faa;
+    }
+
+    .live__vote-bar {
+        background: linear-gradient(to right, var(--cambrian-body) 0%, rgba(108, 145, 143, 0.5) 100%);
+    }
 }

@@ -1,6 +1,23 @@
 import { test } from 'node:test'; import assert from 'node:assert/strict'
 import { generateGameData } from '../scripts/generators/game-data.js'
 import { readFile } from 'node:fs/promises'
+import { drawClosePair, makeRng } from '../game/src/data.js'
+import { compareByValue } from '../game/src/engine/timeline.js'
+
+// Which Came First must be a close call: the two cards dealt should sit near each
+// other in value order, not be an obvious far-apart gap.
+test('drawClosePair deals two distinct cards with nearby values', () => {
+  const cards = Array.from({ length: 30 }, (_, i) => ({ id: `C${i}`, mya: (30 - i) * 20 }))
+  const deck = { cards, valueType: 'mya' }
+  const sorted = cards.slice().sort((a, b) => compareByValue(a, b, deck))
+  const pos = (c) => sorted.indexOf(c)
+  for (let seed = 0; seed < 40; seed++) {
+    const [a, b] = drawClosePair(deck, makeRng(seed), 4)
+    assert.notEqual(a.id, b.id, `seed ${seed}: distinct cards`)
+    const gap = Math.abs(pos(a) - pos(b))
+    assert.ok(gap >= 1 && gap <= 4, `seed ${seed}: sorted gap ${gap} within window`)
+  }
+})
 test('cards.json has all decks with non-empty ids and resolved values', async () => {
   await generateGameData()
   const data = JSON.parse(await readFile('dist/game/cards.json','utf8'))
@@ -25,5 +42,51 @@ test('cards.json excludes type:"special" cards from every deck', async () => {
       data.decks[id].cards.every(c => c.type !== 'special'),
       `${id} deck still contains special cards`
     )
+  }
+})
+
+test('no card has filler flavour text that leaks values', async () => {
+  await generateGameData()
+  const data = JSON.parse(await readFile('dist/game/cards.json', 'utf8'))
+  for (const id of ['evo', 'cambrian', 'human']) {
+    for (const card of data.decks[id].cards) {
+      if (card.flavour) {
+        assert.ok(
+          !card.flavour.includes('million years ago') &&
+          !card.flavour.includes('Encoded by'),
+          `${id}/${card.id}: flavour "${card.flavour}" contains filler text`
+        )
+      }
+    }
+  }
+})
+
+test('substantial fun fact coverage across all decks', async () => {
+  await generateGameData()
+  const data = JSON.parse(await readFile('dist/game/cards.json', 'utf8'))
+
+  // Each deck should have at least 15 cards with non-empty flavour text
+  const evoWithFlavour = data.decks.evo.cards.filter(c => c.flavour && c.flavour.trim()).length
+  const cambrianWithFlavour = data.decks.cambrian.cards.filter(c => c.flavour && c.flavour.trim()).length
+  const humanWithFlavour = data.decks.human.cards.filter(c => c.flavour && c.flavour.trim()).length
+
+  assert.ok(evoWithFlavour >= 15, `evo deck has only ${evoWithFlavour} cards with flavour (need >=15)`)
+  assert.ok(cambrianWithFlavour >= 15, `cambrian deck has only ${cambrianWithFlavour} cards with flavour (need >=15)`)
+  assert.ok(humanWithFlavour >= 15, `human deck has only ${humanWithFlavour} cards with flavour (need >=15)`)
+
+  // No flavour should contain number + "million years ago" or a percentage leak
+  for (const id of ['evo', 'cambrian', 'human']) {
+    for (const card of data.decks[id].cards) {
+      if (card.flavour) {
+        assert.ok(
+          !/\d+\s*million\s+years\s+ago/i.test(card.flavour),
+          `${id}/${card.id}: flavour leaks MYA: "${card.flavour}"`
+        )
+        assert.ok(
+          !/\d+\s*%/.test(card.flavour),
+          `${id}/${card.id}: flavour leaks percent: "${card.flavour}"`
+        )
+      }
+    }
   }
 })

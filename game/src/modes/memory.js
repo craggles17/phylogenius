@@ -31,6 +31,7 @@ export default function start(root, deck, onScore) {
 
     let flipped = []
     let locked = false
+    let matched = 0
 
     function tileEl(card) {
         const el = renderCard(card, { faceDown: true })
@@ -46,7 +47,8 @@ export default function start(root, deck, onScore) {
         if (isMatch(a.card, b.card, CRITERION, deck)) {
             reveal(a.el, a.card)
             reveal(b.el, b.card)
-            onScore(PAIR_POINTS)
+            matched++
+            onScore(PAIR_POINTS, matched >= PAIRS ? { win: true } : {})
         } else {
             onScore(0, { life: true })
             a.el.classList.remove('is-flipped')

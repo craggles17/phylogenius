@@ -90,13 +90,52 @@ async function scoreMemory(page) {
     }, { timeout: 4000 })
 }
 
+// Which Came First: read the two choice cards, look up their values in cards.json,
+// compute the correct one using compareByValue, and click it.
+async function scoreWhichCameFirst(page, deckId) {
+    const { compareByValue } = await import('../game/src/engine/timeline.js')
+    const { readFile } = await import('node:fs/promises')
+    const cardsData = JSON.parse(await readFile('dist/game/cards.json', 'utf8'))
+    const deck = cardsData.decks[deckId]
+
+    const [id1, id2] = await page.$$eval('.game__play .card', (els) =>
+        els.map((e) => e.dataset.id)
+    )
+    assert.ok(id1 && id2, 'expected two choice cards')
+    assert.notEqual(id1, id2, 'expected distinct cards')
+
+    const card1 = deck.cards.find((c) => c.id === id1)
+    const card2 = deck.cards.find((c) => c.id === id2)
+    assert.ok(card1 && card2, 'expected both cards in deck')
+
+    const cmp = compareByValue(card1, card2, deck)
+    const correctId = cmp <= 0 ? id1 : id2
+    await page.click(`.game__play .card[data-id="${correctId}"]`)
+}
+
+// Cladogram: brute-forcing now costs a life per wrong drop (a wrong placement can end
+// the game before a valid one), so drop the known root-eligible card (empty prereqIds)
+// straight onto the tree for a clean, deterministic +score.
+async function scoreCladogram(page, deckId) {
+    const { readFile } = await import('node:fs/promises')
+    const cardsData = JSON.parse(await readFile('dist/game/cards.json', 'utf8'))
+    const deck = cardsData.decks[deckId]
+    const ids = await handIds(page)
+    const rootId = ids.find((id) => {
+        const c = deck.cards.find((x) => x.id === id)
+        return c && (!c.prereqIds || c.prereqIds.length === 0)
+    })
+    assert.ok(rootId, 'expected a root-eligible card in the dealt hand')
+    await dropCard(page, '.game__board', rootId)
+}
+
 // Timeline scores by dropping onto a slot; cladogram onto the whole tree board.
 const DROP_ZONE = { timeline: '.game__slot', cladogram: '.game__board' }
 
 const SCENARIOS = [
-    ['evo', 'timeline'], ['evo', 'cladogram'], ['evo', 'memory'],
-    ['cambrian', 'timeline'], ['cambrian', 'cladogram'], ['cambrian', 'memory'],
-    ['human', 'timeline'], ['human', 'memory'], // Cladogram skipped: human has no prereqs
+    ['evo', 'timeline'], ['evo', 'cladogram'], ['evo', 'memory'], ['evo', 'whichcamefirst'],
+    ['cambrian', 'timeline'], ['cambrian', 'cladogram'], ['cambrian', 'memory'], ['cambrian', 'whichcamefirst'],
+    ['human', 'timeline'], ['human', 'memory'], ['human', 'whichcamefirst'], // Cladogram skipped: human has no prereqs
 ]
 
 let server
@@ -130,6 +169,8 @@ for (const [deckId, modeId] of SCENARIOS) {
             assert.equal(await scoreOf(page), 0, 'fresh session starts at 0')
 
             if (modeId === 'memory') await scoreMemory(page)
+            else if (modeId === 'whichcamefirst') await scoreWhichCameFirst(page, deckId)
+            else if (modeId === 'cladogram') await scoreCladogram(page, deckId)
             else await scoreDragMode(page, DROP_ZONE[modeId])
             assert.ok(await scoreOf(page) > 0, 'visible score updates after a valid move')
 
@@ -144,3 +185,42 @@ for (const [deckId, modeId] of SCENARIOS) {
         }
     })
 }
+
+test('evo/whichcamefirst: game over after losing all lives', async (t) => {
+    if (!browser) return t.skip('Chromium could not launch in this environment')
+
+    const page = await browser.newPage()
+    try {
+        // Use the mya deck: close pairs there are near-continuous (few exact ties), so a
+        // wrong pick reliably costs a life. The percent deck has many tied values and ties
+        // never lose a life, which makes deliberately reaching game over unreliable.
+        await startMode(page, baseUrl, 'evo', 'whichcamefirst')
+        const { compareByValue } = await import('../game/src/engine/timeline.js')
+        const { readFile } = await import('node:fs/promises')
+        const cardsData = JSON.parse(await readFile('dist/game/cards.json', 'utf8'))
+        const deck = cardsData.decks.evo
+
+        // Click the genuinely-wrong card until lives run out. Tied values (cmp === 0)
+        // have no wrong answer and cost no life, so loop with a cap rather than assuming
+        // exactly three picks suffice.
+        let guard = 0
+        while ((await page.$('.game__end')) === null && guard < 25) {
+            guard++
+            const ids = await page.$$eval('.game__play .card', (els) => els.map((e) => e.dataset.id))
+            if (ids.length < 2) break
+            const [id1, id2] = ids
+            const card1 = deck.cards.find((c) => c.id === id1)
+            const card2 = deck.cards.find((c) => c.id === id2)
+            const cmp = compareByValue(card1, card2, deck)
+            const wrongId = cmp < 0 ? id2 : id1 // on a tie this is harmless (no life lost)
+            await page.click(`.game__play .card[data-id="${wrongId}"]`)
+            await new Promise((r) => setTimeout(r, 1300))
+        }
+
+        await page.waitForSelector('.game__end', { timeout: 2000 })
+        const endText = await page.$eval('.game__end', (e) => e.textContent)
+        assert.ok(endText.includes('Game Over'), 'expected Game Over overlay')
+    } finally {
+        await page.close()
+    }
+})
