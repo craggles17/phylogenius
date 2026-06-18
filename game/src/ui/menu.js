@@ -2,6 +2,7 @@
 
 import { hostLiveGame } from '../modes/whichcamefirst-live.js'
 import { renderLegend, renderLegendToggle } from './legend.js'
+import { DIFFICULTY_WINDOWS } from '../data.js'
 
 const MODES = [
     { id: 'timeline', label: 'Timeline' },
@@ -9,6 +10,8 @@ const MODES = [
     { id: 'memory', label: 'Memory Match' },
     { id: 'whichcamefirst', label: 'Which Came First' },
 ]
+
+const COMPARISON_MODES = new Set(['timeline', 'whichcamefirst'])
 
 function deckPicker(decks) {
     const select = document.createElement('select')
@@ -22,7 +25,20 @@ function deckPicker(decks) {
     return select
 }
 
-function modeButton(mode, deck, onStart) {
+function difficultyPicker() {
+    const select = document.createElement('select')
+    select.className = 'menu__difficulty'
+    for (const level of Object.keys(DIFFICULTY_WINDOWS)) {
+        const opt = document.createElement('option')
+        opt.value = level
+        opt.textContent = level
+        if (level === 'Medium') opt.selected = true
+        select.append(opt)
+    }
+    return select
+}
+
+function modeButton(mode, deck, onStart, difficulty) {
     const wrapper = document.createElement('div')
     wrapper.className = 'menu__mode-row'
 
@@ -34,7 +50,7 @@ function modeButton(mode, deck, onStart) {
         btn.disabled = true
         btn.title = 'No prerequisites in this deck'
     } else {
-        btn.addEventListener('click', () => onStart(mode.id, deck.id))
+        btn.addEventListener('click', () => onStart(mode.id, deck.id, difficulty))
     }
 
     const shareBtn = document.createElement('button')
@@ -42,7 +58,10 @@ function modeButton(mode, deck, onStart) {
     shareBtn.textContent = '🔗'
     shareBtn.title = 'Copy link'
     shareBtn.addEventListener('click', () => {
-        const url = `${location.origin}${location.pathname}?mode=${mode.id}&deck=${deck.id}`
+        let url = `${location.origin}${location.pathname}?mode=${mode.id}&deck=${deck.id}`
+        if (COMPARISON_MODES.has(mode.id) && difficulty !== 'Medium') {
+            url += `&difficulty=${difficulty.toLowerCase()}`
+        }
         navigator.clipboard.writeText(url).then(() => {
             shareBtn.textContent = '✓'
             setTimeout(() => { shareBtn.textContent = '🔗' }, 1000)
@@ -58,8 +77,20 @@ export function renderMenu({ decks, data, onStart, onMenu }) {
     root.className = 'menu'
     root.append(Object.assign(document.createElement('h1'), { className: 'menu__title', textContent: 'Phylogenius Puzzles' }))
 
-    const select = deckPicker(decks)
-    root.append(select)
+    const deckSelect = deckPicker(decks)
+    const difficultySelect = difficultyPicker()
+
+    const deckLabel = document.createElement('label')
+    deckLabel.className = 'menu__label'
+    deckLabel.textContent = 'Deck:'
+    deckLabel.append(deckSelect)
+
+    const difficultyLabel = document.createElement('label')
+    difficultyLabel.className = 'menu__label'
+    difficultyLabel.textContent = 'Difficulty:'
+    difficultyLabel.append(difficultySelect)
+
+    root.append(deckLabel, difficultyLabel)
 
     const buttons = document.createElement('div')
     buttons.className = 'menu__modes'
@@ -77,8 +108,15 @@ export function renderMenu({ decks, data, onStart, onMenu }) {
 
     function render() {
         buttons.replaceChildren()
-        const deck = byId[select.value]
-        for (const mode of MODES) buttons.append(modeButton(mode, deck, onStart))
+        const deck = byId[deckSelect.value]
+        const difficulty = difficultySelect.value
+        const opts = { window: DIFFICULTY_WINDOWS[difficulty] }
+
+        for (const mode of MODES) {
+            buttons.append(modeButton(mode, deck, (modeId, deckId, diff) => {
+                onStart(modeId, deckId, COMPARISON_MODES.has(modeId) ? opts : {})
+            }, difficulty))
+        }
 
         // Add "Host Live Vote" button
         const liveBtn = document.createElement('button')
@@ -86,12 +124,13 @@ export function renderMenu({ decks, data, onStart, onMenu }) {
         liveBtn.textContent = 'Host Live Vote'
         liveBtn.addEventListener('click', () => {
             root.replaceChildren()
-            hostLiveGame(root, deck, data, onMenu)
+            hostLiveGame(root, deck, data, onMenu, opts)
         })
         buttons.append(liveBtn)
     }
 
-    select.addEventListener('change', render)
+    deckSelect.addEventListener('change', render)
+    difficultySelect.addEventListener('change', render)
     render()
     root.append(buttons, legendToggle, legendPanel)
     return root

@@ -3,7 +3,7 @@
 // score based on correctness. Correct → +1, wrong → lose a life.
 
 import { renderCard } from '../ui/card.js'
-import { drawClosePair, makeRng, getPairFact } from '../data.js'
+import { drawClosePair, makeRng, getPairFact, DIFFICULTY_WINDOWS } from '../data.js'
 import { compareByValue } from '../engine/timeline.js'
 import { analyzePairRelation } from '../engine/pair-relations.js'
 import { buildRelationIndicator } from '../ui/relation-indicator.js'
@@ -14,9 +14,10 @@ const PROMPT_TEXT = {
 }
 const ROUNDS = 10
 
-export default function start(root, deck, onScore) {
+export default function start(root, deck, onScore, opts = {}) {
+    const window = opts.window !== undefined ? opts.window : DIFFICULTY_WINDOWS.Medium
     const rng = makeRng(Date.now() >>> 0)
-    let hand = drawClosePair(deck, rng)
+    let hand = drawClosePair(deck, rng, window)
     let roundsCompleted = 0
     let ended = false
 
@@ -35,7 +36,7 @@ export default function start(root, deck, onScore) {
 
     function nextRound() {
         if (ended) return
-        hand = drawClosePair(deck, rng)
+        hand = drawClosePair(deck, rng, window)
         renderChoices()
     }
 

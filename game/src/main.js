@@ -40,7 +40,7 @@ function bar(session, onRestart, onMenu) {
 }
 
 // Wire a mode's pure engine to the shared session chrome. Exported for testing.
-export function routeMode(app, deck, modeId, toMenu) {
+export function routeMode(app, deck, modeId, toMenu, opts = {}) {
     let session = createSession({ mode: modeId, deckId: deck.id })
     let ended = false
     const start = MODES[modeId]
@@ -67,17 +67,17 @@ export function routeMode(app, deck, modeId, toMenu) {
         const playfield = document.createElement('div')
         playfield.className = 'game__play'
         app.append(playfield, legendPanel)
-        start(playfield, deck, (delta, opts = {}) => {
+        start(playfield, deck, (delta, scoreOpts = {}) => {
             if (ended) return
             const wasCorrect = delta > 0
-            const wasWrong = opts.life
-            session = opts.life ? loseLife(session) : addScore(session, delta)
+            const wasWrong = scoreOpts.life
+            session = scoreOpts.life ? loseLife(session) : addScore(session, delta)
             update()
             if (wasCorrect) flashFeedback('correct')
             if (wasWrong) flashFeedback('wrong')
             if (session.lives <= 0) endGame(false)
-            else if (opts.win) endGame(true)
-        })
+            else if (scoreOpts.win) endGame(true)
+        }, opts)
     }
 
     function update() {
@@ -130,18 +130,27 @@ export async function boot(app) {
         app.append(renderMenu({
             decks,
             data,
-            onStart: (modeId, deckId) =>
-                routeMode(app, getDeck(data, deckId), modeId, showMenu),
+            onStart: (modeId, deckId, opts) =>
+                routeMode(app, getDeck(data, deckId), modeId, showMenu, opts),
             onMenu: showMenu,
         }))
     }
 
-    // Check for direct mode/deck link ?mode=<id>&deck=<id>
+    // Check for direct mode/deck link ?mode=<id>&deck=<id>&difficulty=<level>
     const params = new URLSearchParams(location.search)
     const modeId = params.get('mode')
     const deckId = params.get('deck')
+    const difficulty = params.get('difficulty')
     if (modeId && deckId && MODES[modeId] && data.decks[deckId]) {
-        routeMode(app, getDeck(data, deckId), modeId, showMenu)
+        const opts = {}
+        if (difficulty) {
+            const { DIFFICULTY_WINDOWS } = await import('./data.js')
+            const level = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase()
+            if (DIFFICULTY_WINDOWS[level] !== undefined) {
+                opts.window = DIFFICULTY_WINDOWS[level]
+            }
+        }
+        routeMode(app, getDeck(data, deckId), modeId, showMenu, opts)
         return
     }
 
