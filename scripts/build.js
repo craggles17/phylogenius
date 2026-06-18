@@ -8,7 +8,12 @@ import { writeCardFiles } from './generators/card-html.js'
 import { generateAllSheets } from './generators/sheet-html.js'
 import { generateRulebookHtml } from './generators/rulebook-html.js'
 import { generateRulebookPdf, generateCardSheetsPdf } from './generators/pdf-gen.js'
-import { join } from 'path'
+import { generateGameData } from './generators/game-data.js'
+import { join, extname } from 'path'
+import { createServer } from 'node:http'
+import { createReadStream } from 'node:fs'
+import { stat } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 
 const DECKS = {
   cambrian: {
@@ -293,6 +298,47 @@ async function buildAll() {
   await buildPdf()
 }
 
+async function buildGameData() {
+  console.log('Generating game data...')
+  const { written, counts } = await generateGameData()
+  for (const [id, n] of Object.entries(counts)) {
+    console.log(`  ${id}: ${n} cards`)
+  }
+  console.log(`Wrote ${written}`)
+}
+
+const MIME = {
+  '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
+  '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png'
+}
+
+// Static file handler over `root`. Exported so the smoke test serves dist/ with the
+// same logic (no drift between the dev server and the test server).
+export function staticHandler(root) {
+  return async (req, res) => {
+    const urlPath = decodeURIComponent(req.url.split('?')[0])
+    let filePath = join(root, urlPath)
+    try {
+      const info = await stat(filePath)
+      if (info.isDirectory()) filePath = join(filePath, 'index.html')
+      const type = MIME[extname(filePath)] || 'application/octet-stream'
+      res.writeHead(200, { 'Content-Type': type })
+      createReadStream(filePath).pipe(res)
+    } catch {
+      res.writeHead(404, { 'Content-Type': 'text/plain' })
+      res.end('Not found')
+    }
+  }
+}
+
+function serve(port) {
+  const server = createServer(staticHandler(resolveFromRoot('dist')))
+  server.listen(port, () => {
+    console.log(`Serving dist/ at http://localhost:${port}/game/`)
+  })
+  return server
+}
+
 async function watchMode() {
   const chokidar = await import('chokidar')
   
@@ -323,27 +369,39 @@ async function watchMode() {
   await buildAll()
 }
 
-// CLI handling
-const args = process.argv.slice(2)
-const command = args[0] || 'all'
-const deckFlag = args.indexOf('--deck')
-const deckName = deckFlag >= 0 ? args[deckFlag + 1] : null
+// CLI handling — only when run directly, so importing staticHandler is side-effect free.
+function runCli() {
+  const args = process.argv.slice(2)
+  const command = args[0] || 'all'
+  const deckFlag = args.indexOf('--deck')
+  const deckName = deckFlag >= 0 ? args[deckFlag + 1] : null
 
-switch (command) {
-  case 'cards':
-    buildCards(deckName)
-    break
-  case 'rulebook':
-    buildRulebook()
-    break
-  case 'pdf':
-    buildPdf()
-    break
-  case 'dev':
-    watchMode()
-    break
-  case 'all':
-  default:
-    buildAll()
+  switch (command) {
+    case 'cards':
+      buildCards(deckName)
+      break
+    case 'data':
+      buildGameData()
+      break
+    case 'serve': {
+      const port = parseInt(args[1], 10) || 8080
+      serve(port)
+      break
+    }
+    case 'rulebook':
+      buildRulebook()
+      break
+    case 'pdf':
+      buildPdf()
+      break
+    case 'dev':
+      watchMode()
+      break
+    case 'all':
+    default:
+      buildAll()
+  }
 }
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) runCli()
 
