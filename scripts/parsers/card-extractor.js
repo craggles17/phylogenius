@@ -2,11 +2,12 @@
 
 import { extractTablesFromMarkdown, findCardTables } from './table-parser.js'
 import { getColorForSuit, getEraColor } from '../utils/color-utils.js'
+import { resolvePrereqIds } from './trait-aliases.js'
 
 export function extractCardsFromMarkdown(markdown, deckType) {
   const tables = extractTablesFromMarkdown(markdown)
   const cardTables = findCardTables(tables)
-  
+
   const cards = []
   for (const table of cardTables) {
     const suit = extractSuitFromTitle(table.title)
@@ -15,7 +16,16 @@ export function extractCardsFromMarkdown(markdown, deckType) {
       if (card) cards.push(card)
     }
   }
-  
+
+  return resolveConnections(cards)
+}
+
+// Resolve free-text prereq/enables into card ids once the whole deck is known.
+function resolveConnections(cards) {
+  for (const card of cards) {
+    card.prereqIds = resolvePrereqIds(card.prereq, cards, card.id)
+    card.enableIds = resolvePrereqIds(card.enables, cards, card.id)
+  }
   return cards
 }
 
@@ -48,7 +58,7 @@ function buildCard(row, suit, deckType, tableTitle) {
 }
 
 function buildTemporalCard(row, suit, deckType) {
-  const id = row['_'] || row['number'] || ''
+  const id = row[''] || row['_'] || row['number'] || ''
   const trait = row['trait'] || ''
   if (!trait) return null
 
@@ -79,16 +89,16 @@ function buildTemporalCard(row, suit, deckType) {
 }
 
 function buildGeneticsCard(row, suit) {
-  const id = row['_'] || row['number'] || ''
+  const id = row[''] || row['_'] || row['number'] || ''
   const trait = row['trait'] || ''
   if (!trait) return null
 
   const gene = row['gene'] || ''
   const rsid = row['rsid'] || ''
-  const globalPercent = parsePercent(row['global__'] || row['global_percent'] || '')
+  const globalPercent = parsePercent(row['global'] || row['global__'] || row['global_percent'] || '')
   const peak = row['peak_region'] || ''
   const effect = row['effect'] || ''
-  const h2 = parseNumber(row['h_'] || row['h2'] || '0.5')
+  const h2 = parseNumber(row['h'] || row['h_'] || row['h2'] || '0.5')
 
   const colors = getColorForSuit('human', suit)
 
@@ -110,7 +120,7 @@ function buildGeneticsCard(row, suit) {
 }
 
 function buildSpecialCard(row, deckType) {
-  const id = row['_'] || row['number'] || ''
+  const id = row[''] || row['_'] || row['number'] || ''
   const card = row['card'] || row['trait'] || ''
   const effect = row['effect'] || ''
   
