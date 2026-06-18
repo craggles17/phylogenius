@@ -10,10 +10,13 @@ const PROMPT_TEXT = {
     mya: 'Which came first?',
     percent: 'Which is rarer?',
 }
+const ROUNDS = 10
 
 export default function start(root, deck, onScore) {
     const rng = makeRng(Date.now() >>> 0)
     let hand = drawHand(deck, 2, rng)
+    let roundsCompleted = 0
+    let ended = false
 
     const prompt = document.createElement('p')
     prompt.className = 'game__prompt'
@@ -25,6 +28,7 @@ export default function start(root, deck, onScore) {
     root.append(prompt, choices)
 
     function nextRound() {
+        if (ended) return
         hand = drawHand(deck, 2, rng)
         renderChoices()
     }
@@ -40,6 +44,7 @@ export default function start(root, deck, onScore) {
     }
 
     function onChoice(picked) {
+        if (ended) return
         const other = hand.find((c) => c !== picked)
         const cmp = compareByValue(picked, other, deck)
         const correct = cmp <= 0
@@ -49,8 +54,15 @@ export default function start(root, deck, onScore) {
             choices.append(renderCard(card))
         }
 
+        roundsCompleted++
+        const isLastRound = roundsCompleted >= ROUNDS
+
         if (correct) {
-            onScore(1)
+            onScore(1, isLastRound ? { win: true } : {})
+            if (isLastRound) {
+                ended = true
+                return
+            }
         } else {
             onScore(0, { life: true })
         }

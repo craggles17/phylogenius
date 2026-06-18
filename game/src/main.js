@@ -34,6 +34,7 @@ function bar(session, onRestart) {
 // Wire a mode's pure engine to the shared session chrome. Exported for testing.
 export function routeMode(app, deck, modeId, toMenu) {
     let session = createSession({ mode: modeId, deckId: deck.id })
+    let ended = false
     const start = MODES[modeId]
 
     function render() {
@@ -43,14 +44,48 @@ export function routeMode(app, deck, modeId, toMenu) {
         playfield.className = 'game__play'
         app.append(playfield)
         start(playfield, deck, (delta, opts = {}) => {
+            if (ended) return
+            const wasCorrect = delta > 0
+            const wasWrong = opts.life
             session = opts.life ? loseLife(session) : addScore(session, delta)
             update()
+            if (wasCorrect) flashFeedback('correct')
+            if (wasWrong) flashFeedback('wrong')
+            if (session.lives <= 0) endGame(false)
+            else if (opts.win) endGame(true)
         })
     }
 
     function update() {
         const old = app.querySelector('.game__bar')
         if (old) old.replaceWith(bar(session, toMenu))
+    }
+
+    function flashFeedback(type) {
+        const barEl = app.querySelector('.game__bar')
+        if (!barEl) return
+        barEl.classList.add(`game__bar--${type}`)
+        setTimeout(() => barEl.classList.remove(`game__bar--${type}`), 400)
+    }
+
+    function endGame(won) {
+        ended = true
+        const playfield = app.querySelector('.game__play')
+        if (playfield) playfield.style.pointerEvents = 'none'
+        const overlay = document.createElement('div')
+        overlay.className = 'game__end'
+        const title = document.createElement('h2')
+        title.className = 'game__end-title'
+        title.textContent = won ? 'You Win!' : 'Game Over'
+        const score = document.createElement('p')
+        score.className = 'game__end-score'
+        score.textContent = `Final Score: ${session.score}`
+        const again = Object.assign(document.createElement('button'), {
+            className: 'game__btn', textContent: 'Play Again',
+        })
+        again.addEventListener('click', toMenu)
+        overlay.append(title, score, again)
+        app.append(overlay)
     }
 
     render()

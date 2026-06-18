@@ -39,8 +39,9 @@ export default function start(root, deck, onScore) {
         // so a completed branch awards its bonus exactly once.
         const placed = Object.keys(placedById).length
         const next = scoreCladogram({ placed, branches: countBranches(placedById) })
-        onScore(next - total)
+        const delta = next - total
         total = next
+        onScore(delta, hand.length === 0 ? { win: true } : {})
     }
 
     makeDropZone(treeEl, (payload) => {
