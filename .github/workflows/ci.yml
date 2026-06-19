@@ -1,0 +1,64 @@
+name: CI
+
+# Test every push and PR; auto-deploy to the live GitHub Pages site only when
+# tests pass on main. The site lives in a separate repo (craggles17.github.io),
+# so the deploy step pushes there using the PAGES_DEPLOY_TOKEN secret
+# (see .github/workflows/README.md for the one-time setup).
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Puppeteer's bundled Chrome powers the headless smoke tests. The suite
+      # self-skips if Chrome can't launch, so CI never fails for that reason.
+      - run: npx puppeteer browsers install chrome
+      - run: npm test
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build game bundle
+        run: node scripts/build.js data
+      - name: Deploy dist/game to the Pages repo
+        env:
+          DEPLOY_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+        run: |
+          if [ -z "$DEPLOY_TOKEN" ]; then
+            echo "::error::PAGES_DEPLOY_TOKEN secret is not set. Add it under Settings → Secrets and variables → Actions (see .github/workflows/README.md)."
+            exit 1
+          fi
+          git clone --depth 1 "https://x-access-token:${DEPLOY_TOKEN}@github.com/craggles17/craggles17.github.io.git" pages-repo
+          rm -rf pages-repo/games/phylogenius
+          mkdir -p pages-repo/games/phylogenius
+          cp -R dist/game/. pages-repo/games/phylogenius/
+          cd pages-repo
+          git config user.name "craggles17"
+          git config user.email "6985827+craggles17@users.noreply.github.com"
+          git add games/phylogenius
+          if git diff --cached --quiet; then
+            echo "No changes to deploy."
+          else
+            git commit -m "deploy(phylogenius): ${GITHUB_SHA::7} via CI"
+            git push
+          fi
