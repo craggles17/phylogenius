@@ -3,11 +3,11 @@
 
 import { makeRng } from './data.js'
 
-// Generate a short, URL-safe room ID. Pure given rng.
+// Generate a short, URL-safe room ID with >=40 bits entropy. Pure given rng.
 export function makeRoomId(rng) {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no confusing 0/O, 1/I
     let id = ''
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
         id += chars[Math.floor(rng() * chars.length)]
     }
     return `phylo-${id}`

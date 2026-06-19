@@ -22,7 +22,7 @@ test('makeRoomId is deterministic and has correct format', () => {
     const id1 = makeRoomId(rng1)
     const id2 = makeRoomId(rng2)
     assert.equal(id1, id2, 'same seed should produce same room ID')
-    assert.match(id1, /^phylo-[A-Z2-9]{5}$/, 'format should be phylo-XXXXX')
+    assert.match(id1, /^phylo-[A-Z2-9]{8}$/, 'format should be phylo-XXXXX')
     const randomPart = id1.split('-')[1]
     assert.equal(/[01IOio]/.test(randomPart), false, 'random part should not contain confusing chars')
 })
