@@ -81,6 +81,8 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
             onVote: (voterId, msg) => {
                 if (msg.round === currentRound) {
                     votesByVoter[voterId] = msg.cardId
+                    // Guard: reject unknown cardId
+                    if (!deck.cards.find((c) => c.id === msg.cardId)) return
                     renderTally()
                     if (shouldReveal(votesByVoter, connectedVoters.size)) {
                         revealBtn.disabled = false
@@ -101,19 +103,26 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
 
                     // If a round is in progress, sync the late joiner
                     if (currentRound > 0 && hand.length > 0) {
-                        sendToVoter({
+                        const stateMsg = {
                             t: 'state',
                             round: currentRound,
                             deckId: deck.id,
                             cardIds: hand.map((c) => c.id),
                             prompt: prompt.textContent,
-                        })
+                            scoreboard: buildScoreboard(scores, voterEmojis),
+                        }
+                        if (revealed) {
+                            stateMsg.revealed = true
+                            stateMsg.winnerId = lastWinnerId
+                        }
+                        sendToVoter(stateMsg)
                     }
                 }
             },
             onVoterLeave: (voterId) => {
                 connectedVoters.delete(voterId)
                 updateVoterList()
+                delete votesByVoter[voterId]
             },
         })
     } catch (err) {
@@ -123,6 +132,8 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
 
     let currentRound = 0
     let hand = []
+    let revealed = false
+    let lastWinnerId = null
     let votesByVoter = {}
     let hostVoted = false
 
@@ -142,6 +153,7 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
         hand = drawClosePair(deck, rng, window)
         votesByVoter = {}
         hostVoted = false
+        revealed = false
         renderRound()
         hub.broadcast({ t: 'round', round: currentRound, deckId: deck.id, cardIds: hand.map((c) => c.id), prompt: prompt.textContent })
         startBtn.style.display = 'none'
@@ -158,6 +170,7 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
         hand = drawClosePair(deck, rng, window)
         votesByVoter = {}
         hostVoted = false
+        revealed = false
         factBox.style.display = 'none'
         renderRound()
         hub.broadcast({ t: 'round', round: currentRound, deckId: deck.id, cardIds: hand.map((c) => c.id), prompt: prompt.textContent })
@@ -221,6 +234,11 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
         const counts = tallyVotes(votesByVoter)
         const winnerCard = compareByValue(hand[0], hand[1], deck) <= 0 ? hand[0] : hand[1]
 
+        revealed = true
+        lastWinnerId = winnerCard.id
+
+        revealed = true
+        lastWinnerId = winnerCard.id
         scores = updateScores(scores, votesByVoter, winnerCard.id)
 
         // Get pair fact and relationship
@@ -359,25 +377,65 @@ export async function joinLiveGame(root, roomId, data, onMenu) {
             return
         }
 
-        status.textContent = 'Vote for your answer:'
-
-        for (const cardId of msg.cardIds) {
-            const card = deckCards().find((c) => c.id === cardId)
-            if (!card) continue
-            const cardEl = renderCard(card, { hideValue: true })
-            cardEl.style.cursor = 'pointer'
-            cardEl.addEventListener('click', () => {
-                if (!voted) {
-                    client.send({ t: 'vote', round: currentRound, cardId: card.id })
-                    voted = true
-                    status.textContent = 'Vote submitted! Waiting for reveal...'
+        // If late-joiner during reveal, render revealed state
+        if (msg.revealed && msg.winnerId) {
+            // Guard: validate winnerId
+            if (!deckCards().find((c) => c.id === msg.winnerId)) {
+                status.textContent = 'Invalid reveal state from host'
+                return
+            }
+            status.textContent = 'Revealed!'
+            for (const cardId of msg.cardIds) {
+                const card = deckCards().find((c) => c.id === cardId)
+                if (!card) continue
+                const wrapper = el('div', 'live__card-wrapper')
+                const cardEl = renderCard(card)
+                if (card.id === msg.winnerId) {
+                    cardEl.classList.add('card--winner')
+                    const label = el('div', 'card__winner-label', 'Correct!')
+                    cardEl.append(label)
+                } else {
+                    cardEl.classList.add('card--loser')
                 }
-            })
-            choices.append(cardEl)
+                wrapper.append(cardEl)
+                choices.append(wrapper)
+            }
+        } else {
+            status.textContent = 'Vote for your answer:'
+            for (const cardId of msg.cardIds) {
+                const card = deckCards().find((c) => c.id === cardId)
+                if (!card) continue
+                const cardEl = renderCard(card, { hideValue: true })
+                cardEl.style.cursor = 'pointer'
+                cardEl.addEventListener('click', () => {
+                    if (!voted) {
+                        client.send({ t: 'vote', round: currentRound, cardId: card.id })
+                        voted = true
+                        status.textContent = 'Vote submitted! Waiting for reveal...'
+                    }
+                })
+                choices.append(cardEl)
+            }
+        }
+
+        // Render scoreboard if provided
+        if (msg.scoreboard) {
+            scoreboard.replaceChildren()
+            const title = el('h3', 'live__scoreboard-title', '🏆 Scoreboard')
+            scoreboard.append(title)
+            for (const entry of msg.scoreboard) {
+                const row = el('div', 'live__score-row')
+                const name = entry.voterId === '__host__' ? 'Host 👑' : `${entry.emoji} ${entry.voterId.slice(0, 8)}...`
+                row.textContent = `${name}: ${entry.score}`
+                scoreboard.append(row)
+            }
         }
     }
 
     function handleReveal(msg) {
+        // Guard: validate winnerId
+        if (!deckCards().find((c) => c.id === msg.winnerId)) return
+
         status.textContent = 'Revealed!'
         const cards = choices.querySelectorAll('.card')
         choices.replaceChildren()
