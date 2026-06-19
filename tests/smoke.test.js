@@ -224,3 +224,47 @@ test('evo/whichcamefirst: game over after losing all lives', async (t) => {
         await page.close()
     }
 })
+
+// Tap-to-place is the touch-friendly path for the two drag modes. These use REAL
+// clicks (no synthetic dataTransfer) — exactly what a mobile user does and what
+// native HTML5 drag cannot deliver on touch. Pick a hand card, then tap the target.
+const scoredAfter = (page) =>
+    page.waitForFunction(() => {
+        const s = document.querySelector('.game__score')
+        return s && Number(s.textContent.replace(/\D/g, '')) > 0
+    }, { timeout: 4000 })
+
+test('timeline is playable by tap (no drag): pick a card, tap a slot', async (t) => {
+    if (!browser) return t.skip('Chromium could not launch in this environment')
+    const page = await browser.newPage()
+    try {
+        await startMode(page, baseUrl, 'evo', 'timeline')
+        await page.click('.game__hand .card') // pick (tap)
+        await page.click('.game__slot') // place (tap) — first card is always valid
+        await scoredAfter(page)
+        assert.ok(await scoreOf(page) > 0, 'timeline scores via tap-to-place')
+    } finally {
+        await page.close()
+    }
+})
+
+test('cladogram is playable by tap (no drag): pick a root card, tap the tree', async (t) => {
+    if (!browser) return t.skip('Chromium could not launch in this environment')
+    const { readFile } = await import('node:fs/promises')
+    const deck = JSON.parse(await readFile('dist/game/cards.json', 'utf8')).decks.evo
+    const page = await browser.newPage()
+    try {
+        await startMode(page, baseUrl, 'evo', 'cladogram')
+        const rootId = (await handIds(page)).find((id) => {
+            const c = deck.cards.find((x) => x.id === id)
+            return c && (!c.prereqIds || c.prereqIds.length === 0)
+        })
+        assert.ok(rootId, 'expected a root-eligible card in the dealt hand')
+        await page.click(`.game__hand .card[data-id="${rootId}"]`) // pick
+        await page.click('.game__tree') // place onto the visible tree
+        await scoredAfter(page)
+        assert.ok(await scoreOf(page) > 0, 'cladogram scores via tap-to-place')
+    } finally {
+        await page.close()
+    }
+})

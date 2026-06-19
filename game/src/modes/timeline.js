@@ -26,7 +26,10 @@ export default function start(root, deck, onScore, opts = {}) {
     function renderHand() {
         handEl.replaceChildren()
         for (const card of hand) {
-            const el = enableDrag(renderCard(card), { id: card.id })
+            // Hide the value in hand so ordering is a real puzzle; placing reveals it.
+            const el = enableDrag(renderCard(card, { hideValue: true }), { id: card.id })
+            el.setAttribute('role', 'button')
+            el.setAttribute('aria-label', `${card.trait}: pick up, then tap a slot to place`)
             handEl.append(el)
         }
     }
@@ -43,9 +46,16 @@ export default function start(root, deck, onScore, opts = {}) {
         onScore(1, hand.length === 0 ? { win: true } : {})
     }
 
-    function slot(index) {
+    function slot(index, hint) {
         const zone = document.createElement('div')
         zone.className = 'game__slot'
+        zone.setAttribute('role', 'button')
+        zone.setAttribute('aria-label', 'Place the selected card in this slot')
+        if (hint) {
+            zone.append(Object.assign(document.createElement('span'), {
+                className: 'game__slot-hint', textContent: hint,
+            }))
+        }
         makeDropZone(zone, (payload) => {
             const card = hand.find((c) => c.id === payload?.id)
             if (card) insertAt(card, index)
@@ -55,9 +65,11 @@ export default function start(root, deck, onScore, opts = {}) {
 
     function renderBoard() {
         boardEl.replaceChildren()
-        boardEl.append(slot(0))
+        const empty = placed.length === 0
+        boardEl.append(slot(0, empty ? 'Tap a card, then tap here' : '+'))
         placed.forEach((card, i) => {
-            boardEl.append(renderCard(card), slot(i + 1))
+            // Placed cards are revealed (value shown) so the order becomes legible.
+            boardEl.append(renderCard(card), slot(i + 1, '+'))
         })
     }
 

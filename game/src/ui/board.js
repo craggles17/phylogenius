@@ -1,7 +1,31 @@
-// Shared drag/drop + layout helpers. HTML5 drag-and-drop; payload as JSON.
-// Keyboard support: pick with Enter/Space, drop with Enter/Space, cancel with Escape.
+// Shared placement helpers. Three input paths, one model:
+//   • mouse drag  — HTML5 dataTransfer (desktop only; dead on touch)
+//   • tap / click — pick a card, then tap a target (works everywhere, incl. mobile)
+//   • keyboard    — Enter/Space to pick, Enter/Space on a target to drop, Escape cancels
+// Tap and keyboard share one "picked" card; picking highlights it (.card--selected),
+// tapping a drop target places it. This is what makes the drag modes touch-playable.
 
-let keyboardPickedPayload = null
+let picked = null
+
+function clearPicked() {
+    picked = null
+    document.querySelectorAll('.card--selected').forEach((c) => c.classList.remove('card--selected'))
+}
+
+function pick(el, payload) {
+    const alreadyPicked = el.classList.contains('card--selected')
+    clearPicked()
+    if (alreadyPicked) return // tapping the selected card again deselects it
+    picked = payload
+    el.classList.add('card--selected')
+}
+
+function place(onDrop, el) {
+    if (!picked) return
+    const payload = picked
+    clearPicked()
+    onDrop(payload, el)
+}
 
 export function enableDrag(el, payload) {
     el.draggable = true
@@ -12,14 +36,13 @@ export function enableDrag(el, payload) {
         el.classList.add('is-dragging')
     })
     el.addEventListener('dragend', () => el.classList.remove('is-dragging'))
+    el.addEventListener('click', () => pick(el, payload))
     el.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
-            keyboardPickedPayload = payload
-            el.classList.add('is-dragging')
+            pick(el, payload)
         } else if (e.key === 'Escape') {
-            keyboardPickedPayload = null
-            el.classList.remove('is-dragging')
+            clearPicked()
         }
     })
     return el
@@ -44,14 +67,13 @@ export function makeDropZone(el, onDrop) {
         }
         onDrop(payload, el)
     })
+    el.addEventListener('click', () => place(onDrop, el))
     el.addEventListener('keydown', (e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && keyboardPickedPayload) {
+        if ((e.key === 'Enter' || e.key === ' ') && picked) {
             e.preventDefault()
-            onDrop(keyboardPickedPayload, el)
-            keyboardPickedPayload = null
+            place(onDrop, el)
         } else if (e.key === 'Escape') {
-            keyboardPickedPayload = null
-            document.querySelectorAll('.is-dragging').forEach((item) => item.classList.remove('is-dragging'))
+            clearPicked()
         }
     })
     return el

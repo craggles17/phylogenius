@@ -17,9 +17,15 @@ export default function start(root, deck, onScore) {
 
     const handEl = document.createElement('div')
     handEl.className = 'game__hand'
+    const hint = Object.assign(document.createElement('p'), {
+        className: 'game__tree-hint',
+        textContent: 'Tap a card, then tap the tree. Place a root first, then cards whose ancestors are already in the tree.',
+    })
     const treeEl = document.createElement('div')
-    treeEl.className = 'game__board'
-    root.append(handEl, treeEl)
+    treeEl.className = 'game__board game__tree'
+    treeEl.setAttribute('role', 'button')
+    treeEl.setAttribute('aria-label', 'Cladogram tree: place the selected card here')
+    root.append(handEl, hint, treeEl)
 
     function renderHand() {
         handEl.replaceChildren()

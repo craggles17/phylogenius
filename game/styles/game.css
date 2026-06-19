@@ -334,6 +334,14 @@ body {
     outline-offset: 4px;
 }
 
+/* Picked-up card (tap or keyboard): clearly highlighted until placed. Outline +
+   glow only — the hand/board rules set transform, so we avoid a specificity fight. */
+.card--selected {
+    outline: 3px solid var(--gold-primary);
+    outline-offset: 3px;
+    box-shadow: 0 0 16px rgba(201, 162, 39, 0.55);
+}
+
 /* Face-down card back */
 .card--back {
     align-items: center;
@@ -347,10 +355,65 @@ body {
     opacity: 0.6;
 }
 
-/* Drop zone slots - minimum tap target size */
+/* Drop-zone slots: visible, tappable targets (>=44px) so players see where cards go. */
 .game__slot {
-    min-width: 44px;
-    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    min-height: 120px;
+    padding: 0 var(--space-sm);
+    border: 2px dashed var(--color-border-dark);
+    border-radius: 8px;
+    background: rgba(13, 59, 102, 0.03);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.game__slot:hover,
+.game__slot:focus,
+.game__slot.is-over {
+    border-color: var(--gold-primary);
+    background: rgba(201, 162, 39, 0.1);
+    outline: none;
+}
+
+.game__slot-hint {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-align: center;
+    pointer-events: none;
+}
+
+/* Cladogram tree: a single visible drop panel (distinct from the memory grid, which
+   also uses .game__board). Dashed + min-height so it reads as a target when empty. */
+.game__tree {
+    min-height: 180px;
+    align-content: flex-start;
+    border: 2px dashed var(--color-border-dark);
+    border-radius: 12px;
+    background: rgba(13, 59, 102, 0.03);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.game__tree:hover,
+.game__tree:focus,
+.game__tree.is-over {
+    border-color: var(--gold-primary);
+    background: rgba(201, 162, 39, 0.08);
+    outline: none;
+}
+
+.game__tree-hint {
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    text-align: center;
+    margin: var(--space-md) 0 0;
+    line-height: 1.4;
 }
 
 /* End game overlay */
