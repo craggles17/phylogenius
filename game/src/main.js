@@ -50,6 +50,10 @@ function bar(session, onRestart, onMenu) {
 export function routeMode(app, deck, modeId, toMenu, opts = {}) {
     let session = createSession({ mode: modeId, deckId: deck.id })
     let ended = false
+    // Bumped on every render so a previous session's pending timers (memory flip
+    // resolve, which-came-first next-round) no-op after a Restart instead of scoring
+    // into the fresh session.
+    let generation = 0
     const start = MODES[modeId]
 
     let legendVisible = false
@@ -66,16 +70,25 @@ export function routeMode(app, deck, modeId, toMenu, opts = {}) {
         legendToggle.textContent = legendVisible ? '📖 Hide' : '📖'
     })
 
+    // Real restart: fresh session, same mode/deck, re-deal. (Previously both the
+    // Restart button and the end-screen "Play Again" just returned to the menu.)
+    function restart() {
+        session = createSession({ mode: modeId, deckId: deck.id })
+        ended = false
+        render()
+    }
+
     function render() {
+        const gen = ++generation
         clearBoard(app)
-        const barEl = bar(session, () => { ended = true; toMenu() }, toMenu)
+        const barEl = bar(session, restart, toMenu)
         barEl.append(legendToggle)
         app.append(barEl)
         const playfield = document.createElement('div')
         playfield.className = 'game__play'
         app.append(playfield, legendPanel)
         start(playfield, deck, (delta, scoreOpts = {}) => {
-            if (ended) return
+            if (ended || gen !== generation) return
             const wasCorrect = delta > 0
             const wasWrong = scoreOpts.life
             session = scoreOpts.life ? loseLife(session) : addScore(session, delta)
@@ -90,7 +103,7 @@ export function routeMode(app, deck, modeId, toMenu, opts = {}) {
     function update() {
         const old = app.querySelector('.game__bar')
         if (old) {
-            const barEl = bar(session, () => { ended = true; toMenu() }, toMenu)
+            const barEl = bar(session, restart, toMenu)
             barEl.append(legendToggle)
             old.replaceWith(barEl)
         }
@@ -129,22 +142,26 @@ export function routeMode(app, deck, modeId, toMenu, opts = {}) {
         const again = Object.assign(document.createElement('button'), {
             className: 'game__btn', textContent: 'Play Again',
         })
-        again.addEventListener('click', toMenu)
-        overlay.append(title, score, again)
+        again.addEventListener('click', restart)
+        const menuBtn = Object.assign(document.createElement('button'), {
+            className: 'game__btn game__btn--back', textContent: '← Menu',
+        })
+        menuBtn.addEventListener('click', toMenu)
+        overlay.append(title, score, again, menuBtn)
         app.append(overlay)
 
         // Move focus to overlay heading and trap focus within overlay
         setTimeout(() => {
             title.setAttribute('tabindex', '-1')
             title.focus()
-            // Simple focus trap: on Tab from last element (again button), go back to title
+            // Focus trap: Tab off the last button (menu) wraps to the title, and back.
             const trapFocus = (e) => {
-                if (e.key === 'Tab' && e.target === again && !e.shiftKey) {
+                if (e.key === 'Tab' && e.target === menuBtn && !e.shiftKey) {
                     e.preventDefault()
                     title.focus()
                 } else if (e.key === 'Tab' && e.target === title && e.shiftKey) {
                     e.preventDefault()
-                    again.focus()
+                    menuBtn.focus()
                 }
             }
             overlay.addEventListener('keydown', trapFocus)
