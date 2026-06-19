@@ -32,7 +32,7 @@ function dataSection(card, { hideValue = false } = {}) {
     return data
 }
 
-export function renderCard(card, { faceDown = false, hideValue = false } = {}) {
+export function renderCard(card, { faceDown = false, hideValue = false, interactive = false } = {}) {
     const type = card.type || 'standard'
     const article = el('article', `card card--${card.deckType || ''} card--${type}`)
     article.dataset.suit = card.suit || ''
@@ -40,6 +40,11 @@ export function renderCard(card, { faceDown = false, hideValue = false } = {}) {
     if (faceDown) {
         article.classList.add('card--back')
         article.append(el('span', 'card__icon', '?'))
+        if (interactive) {
+            article.setAttribute('role', 'button')
+            article.setAttribute('tabindex', '0')
+            article.setAttribute('aria-label', 'Face-down card')
+        }
         return article
     }
 

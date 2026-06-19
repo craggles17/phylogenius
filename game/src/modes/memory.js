@@ -34,8 +34,14 @@ export default function start(root, deck, onScore) {
     let matched = 0
 
     function tileEl(card) {
-        const el = renderCard(card, { faceDown: true })
+        const el = renderCard(card, { faceDown: true, interactive: true })
         el.addEventListener('click', () => onFlip(el, card))
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onFlip(el, card)
+            }
+        })
         return el
     }
 
