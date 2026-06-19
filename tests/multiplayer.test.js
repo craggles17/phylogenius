@@ -13,6 +13,7 @@ import {
     updateScores,
     buildScoreboard,
     shouldReveal,
+    isAcceptableVote,
 } from '../game/src/multiplayer.js'
 import { makeRng } from '../game/src/data.js'
 
@@ -272,4 +273,28 @@ test('shouldReveal returns false when host has not voted and zero voters', () =>
 test('shouldReveal returns true when extra/reconnected voters voted', () => {
     const votesByVoter = { voter1: 'cardA', voter2: 'cardB', voter3: 'cardA', '__host__': 'cardB' }
     assert.equal(shouldReveal(votesByVoter, 2), true, '3 voters + host >= 2 voters + host')
+})
+
+test('isAcceptableVote accepts a current-round vote for a card in the hand', () => {
+    const hand = [{ id: 'cardA' }, { id: 'cardB' }]
+    assert.equal(isAcceptableVote({ round: 3, cardId: 'cardA' }, 3, hand), true)
+    assert.equal(isAcceptableVote({ round: 3, cardId: 'cardB' }, 3, hand), true)
+})
+
+test('isAcceptableVote rejects a vote from a stale (previous) round', () => {
+    const hand = [{ id: 'cardA' }, { id: 'cardB' }]
+    assert.equal(isAcceptableVote({ round: 2, cardId: 'cardA' }, 3, hand), false)
+})
+
+test('isAcceptableVote rejects a vote for a card not in the current hand', () => {
+    const hand = [{ id: 'cardA' }, { id: 'cardB' }]
+    // cardZ is a valid deck card from a prior round but not in this round's pair.
+    assert.equal(isAcceptableVote({ round: 3, cardId: 'cardZ' }, 3, hand), false)
+})
+
+test('isAcceptableVote rejects a missing/garbage message', () => {
+    const hand = [{ id: 'cardA' }, { id: 'cardB' }]
+    assert.equal(isAcceptableVote(null, 3, hand), false)
+    assert.equal(isAcceptableVote(undefined, 3, hand), false)
+    assert.equal(isAcceptableVote({}, 3, hand), false)
 })
