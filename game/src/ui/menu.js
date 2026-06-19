@@ -57,6 +57,7 @@ function modeButton(mode, deck, onStart, difficulty) {
     shareBtn.className = 'menu__share'
     shareBtn.textContent = '🔗'
     shareBtn.title = 'Copy link'
+    shareBtn.setAttribute('aria-label', 'Copy shareable link')
     shareBtn.addEventListener('click', () => {
         let url = `${location.origin}${location.pathname}?mode=${mode.id}&deck=${deck.id}`
         if (COMPARISON_MODES.has(mode.id) && difficulty !== 'Medium') {

@@ -45,7 +45,15 @@ export default function start(root, deck, onScore, opts = {}) {
         for (const card of hand) {
             const el = renderCard(card, { hideValue: true })
             el.style.cursor = 'pointer'
+            el.setAttribute('role', 'button')
+            el.setAttribute('tabindex', '0')
             el.addEventListener('click', () => onChoice(card))
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onChoice(card)
+                }
+            })
             choices.append(el)
         }
     }

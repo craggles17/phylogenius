@@ -347,6 +347,12 @@ body {
     opacity: 0.6;
 }
 
+/* Drop zone slots - minimum tap target size */
+.game__slot {
+    min-width: 44px;
+    min-height: 44px;
+}
+
 /* End game overlay */
 .game__end {
     position: fixed;
@@ -697,8 +703,8 @@ body {
     background: white;
     cursor: pointer;
     transition: all 0.2s;
-    min-width: 36px;
-    height: 36px;
+    min-width: 44px;
+    min-height: 44px;
 }
 
 .menu__share:hover {
@@ -859,5 +865,25 @@ body {
     .live__vote-bar {
         font-size: 0.75rem;
         padding: var(--space-sm) var(--space-md);
+    }
+
+    .menu__mode,
+    .game__btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .menu__share {
+        min-width: 48px;
+        min-height: 48px;
+    }
+
+    .game__choices {
+        flex-direction: column;
+    }
+
+    .game__choices .card {
+        width: 100%;
+        max-width: 280px;
     }
 }

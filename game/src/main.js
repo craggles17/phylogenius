@@ -22,15 +22,22 @@ function bar(session, onRestart, onMenu) {
         className: 'game__btn game__btn--back', textContent: '← Menu',
     })
     menu.addEventListener('click', onMenu)
-    el.append(
-        menu,
-        Object.assign(document.createElement('span'), {
-            className: 'game__score', textContent: `Score: ${session.score}`,
-        }),
-        Object.assign(document.createElement('span'), {
-            className: 'game__lives', textContent: `Lives: ${session.lives}`,
-        }),
-    )
+
+    const scoreEl = Object.assign(document.createElement('span'), {
+        className: 'game__score', textContent: `Score: ${session.score}`,
+    })
+    scoreEl.setAttribute('role', 'status')
+    scoreEl.setAttribute('aria-live', 'polite')
+    scoreEl.setAttribute('aria-atomic', 'true')
+
+    const livesEl = Object.assign(document.createElement('span'), {
+        className: 'game__lives', textContent: `Lives: ${session.lives}`,
+    })
+    livesEl.setAttribute('role', 'status')
+    livesEl.setAttribute('aria-live', 'polite')
+    livesEl.setAttribute('aria-atomic', 'true')
+
+    el.append(menu, scoreEl, livesEl)
     const restart = Object.assign(document.createElement('button'), {
         className: 'game__btn', textContent: 'Restart',
     })
@@ -94,6 +101,15 @@ export function routeMode(app, deck, modeId, toMenu, opts = {}) {
         if (!barEl) return
         barEl.classList.add(`game__bar--${type}`)
         setTimeout(() => barEl.classList.remove(`game__bar--${type}`), 400)
+        // Add audible announcement for screen readers (not color-only)
+        const announcement = document.createElement('div')
+        announcement.setAttribute('role', 'status')
+        announcement.setAttribute('aria-live', 'polite')
+        announcement.style.position = 'absolute'
+        announcement.style.left = '-10000px'
+        announcement.textContent = type === 'correct' ? 'Correct' : 'Incorrect'
+        app.append(announcement)
+        setTimeout(() => announcement.remove(), 1000)
     }
 
     function endGame(won) {
@@ -116,6 +132,23 @@ export function routeMode(app, deck, modeId, toMenu, opts = {}) {
         again.addEventListener('click', toMenu)
         overlay.append(title, score, again)
         app.append(overlay)
+
+        // Move focus to overlay heading and trap focus within overlay
+        setTimeout(() => {
+            title.setAttribute('tabindex', '-1')
+            title.focus()
+            // Simple focus trap: on Tab from last element (again button), go back to title
+            const trapFocus = (e) => {
+                if (e.key === 'Tab' && e.target === again && !e.shiftKey) {
+                    e.preventDefault()
+                    title.focus()
+                } else if (e.key === 'Tab' && e.target === title && e.shiftKey) {
+                    e.preventDefault()
+                    again.focus()
+                }
+            }
+            overlay.addEventListener('keydown', trapFocus)
+        }, 100)
     }
 
     render()
