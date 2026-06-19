@@ -3,8 +3,10 @@
 // score based on correctness. Correct → +1, wrong → lose a life.
 
 import { renderCard } from '../ui/card.js'
-import { drawClosePair, makeRng } from '../data.js'
+import { drawClosePair, makeRng, getPairFact, DIFFICULTY_WINDOWS } from '../data.js'
 import { compareByValue } from '../engine/timeline.js'
+import { analyzePairRelation } from '../engine/pair-relations.js'
+import { buildRelationIndicator } from '../ui/relation-indicator.js'
 
 const PROMPT_TEXT = {
     mya: 'Which came first?',
@@ -12,9 +14,10 @@ const PROMPT_TEXT = {
 }
 const ROUNDS = 10
 
-export default function start(root, deck, onScore) {
+export default function start(root, deck, onScore, opts = {}) {
+    const window = opts.window !== undefined ? opts.window : DIFFICULTY_WINDOWS.Medium
     const rng = makeRng(Date.now() >>> 0)
-    let hand = drawClosePair(deck, rng)
+    let hand = drawClosePair(deck, rng, window)
     let roundsCompleted = 0
     let ended = false
 
@@ -25,11 +28,15 @@ export default function start(root, deck, onScore) {
     const choices = document.createElement('div')
     choices.className = 'game__choices'
 
-    root.append(prompt, choices)
+    const factBox = document.createElement('div')
+    factBox.className = 'game__fact-box'
+    factBox.style.display = 'none'
+
+    root.append(prompt, choices, factBox)
 
     function nextRound() {
         if (ended) return
-        hand = drawClosePair(deck, rng)
+        hand = drawClosePair(deck, rng, window)
         renderChoices()
     }
 
@@ -53,8 +60,22 @@ export default function start(root, deck, onScore) {
         const winnerCard = compareByValue(hand[0], hand[1], deck) <= 0 ? hand[0] : hand[1]
         const loserCard = hand[0] === winnerCard ? hand[1] : hand[0]
 
+        // Show pair fact and relationship
+        const pairFact = getPairFact(hand[0], hand[1], deck)
+        const relation = analyzePairRelation(hand[0], hand[1], deck)
+
         choices.replaceChildren()
+
+        // Build relationship indicator if related
+        let relationIndicator = null
+        if (relation.related) {
+            relationIndicator = buildRelationIndicator(hand[0], hand[1], winnerCard, relation)
+        }
+
         for (const card of hand) {
+            const wrapper = document.createElement('div')
+            wrapper.className = 'game__card-wrapper'
+
             const el = renderCard(card)
             if (card === winnerCard) {
                 el.classList.add('card--winner')
@@ -65,8 +86,19 @@ export default function start(root, deck, onScore) {
             } else {
                 el.classList.add('card--loser')
             }
-            choices.append(el)
+            wrapper.appendChild(el)
+
+            // Insert relationship indicator between cards
+            if (relationIndicator && card === hand[0]) {
+                choices.append(wrapper, relationIndicator)
+            } else {
+                choices.append(wrapper)
+            }
         }
+
+        // Show fact box
+        factBox.textContent = pairFact
+        factBox.style.display = 'block'
 
         roundsCompleted++
         const isLastRound = roundsCompleted >= ROUNDS
@@ -81,7 +113,10 @@ export default function start(root, deck, onScore) {
             onScore(0, { life: true })
         }
 
-        setTimeout(nextRound, 1200)
+        setTimeout(() => {
+            factBox.style.display = 'none'
+            nextRound()
+        }, 1200)
     }
 
     renderChoices()

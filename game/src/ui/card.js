@@ -43,6 +43,11 @@ export function renderCard(card, { faceDown = false, hideValue = false } = {}) {
         return article
     }
 
+    // Add description tooltip (only when not face-down)
+    if (card.description) {
+        article.title = card.description
+    }
+
     const colors = card.colors || {}
     const header = el('header', 'card__header')
     const icon = el('span', 'card__icon', colors.icon || '')

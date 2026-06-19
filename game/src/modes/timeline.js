@@ -3,7 +3,7 @@
 
 import { renderCard } from '../ui/card.js'
 import { enableDrag, makeDropZone } from '../ui/board.js'
-import { drawHand, makeRng } from '../data.js'
+import { drawHand, drawCloseHand, makeRng, DIFFICULTY_WINDOWS } from '../data.js'
 import { isCorrectPlacement, compareByValue } from '../engine/timeline.js'
 
 const HAND_SIZE = 6
@@ -12,8 +12,9 @@ function neighbours(placed, index) {
     return [placed[index - 1] || null, placed[index] || null]
 }
 
-export default function start(root, deck, onScore) {
-    const hand = drawHand(deck, HAND_SIZE, makeRng(Date.now() >>> 0))
+export default function start(root, deck, onScore, opts = {}) {
+    const window = opts.window !== undefined ? opts.window : DIFFICULTY_WINDOWS.Medium
+    const hand = drawCloseHand(deck, HAND_SIZE, makeRng(Date.now() >>> 0), window)
     const placed = []
 
     const handEl = document.createElement('div')
