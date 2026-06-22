@@ -87,7 +87,7 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
             onVote: (voterId, msg) => {
                 // Validate BEFORE recording: only current-round votes for a card in the
                 // current hand count (rejects stale/forged raw messages).
-                if (!isAcceptableVote(msg, currentRound, hand)) return
+                if (revealed || !isAcceptableVote(msg, currentRound, hand)) return
                 votesByVoter[voterId] = msg.cardId
                 renderTally()
                 if (shouldReveal(votesByVoter, connectedVoters.size)) {
