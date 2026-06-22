@@ -249,6 +249,7 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
     }
 
     function revealRound() {
+        if (revealed) return
         const counts = tallyVotes(votesByVoter)
         const winnerCard = compareByValue(hand[0], hand[1], deck) <= 0 ? hand[0] : hand[1]
 
