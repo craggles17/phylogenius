@@ -48,6 +48,13 @@ export function shouldReveal(votesByVoter, connectedVoterCount) {
     return Object.keys(votesByVoter).length >= connectedVoterCount + 1
 }
 
+// A vote is acceptable only if it is for the current round AND names a card in the
+// current hand. Guards against stale (previous-round) or forged raw PeerJS messages
+// that would otherwise be recorded and skew the tally / reveal gate. Pure.
+export function isAcceptableVote(msg, currentRound, hand) {
+    return !!msg && msg.round === currentRound && hand.some((c) => c.id === msg.cardId)
+}
+
 // Extract unique clade emojis from a deck's cards.
 // Clade fields may be composite multi-emoji strings (e.g. "🐟🦎", "🦑🐟🌿").
 // Returns array of unique SINGLE emoji glyphs, sorted for determinism.

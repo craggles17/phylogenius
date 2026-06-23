@@ -80,6 +80,9 @@ export function makeDropZone(el, onDrop) {
 }
 
 export function clearBoard(root) {
+    // Reset the shared pick too: it's module-global, so a card picked-but-not-placed
+    // before a restart/menu would otherwise leak into the next session's first drop.
+    clearPicked()
     while (root.firstChild) root.removeChild(root.firstChild)
     return root
 }

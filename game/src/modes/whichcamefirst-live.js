@@ -15,6 +15,7 @@ import {
     updateScores,
     buildScoreboard,
     shouldReveal,
+    isAcceptableVote,
     hostRoom,
     joinRoom,
 } from '../multiplayer.js'
@@ -52,11 +53,16 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
     const startBtn = el('button', 'game__btn', 'Start Round')
     const revealBtn = el('button', 'game__btn', 'Reveal')
     revealBtn.disabled = true
+    // Host escape hatch: reveal even if a connected voter never votes (AFK), which
+    // would otherwise leave the gated Reveal button disabled forever.
+    const forceBtn = el('button', 'game__btn', 'Force Reveal')
+    forceBtn.disabled = true
+    forceBtn.style.display = 'none'
     const nextBtn = el('button', 'game__btn', 'Next Round')
     nextBtn.disabled = true
     nextBtn.style.display = 'none'
 
-    panel.append(backBtn, linkLabel, linkBox, voterList, startBtn, revealBtn, nextBtn)
+    panel.append(backBtn, linkLabel, linkBox, voterList, startBtn, revealBtn, forceBtn, nextBtn)
 
     const prompt = el('p', 'game__prompt', PROMPT_TEXT[deck.valueType] || 'Which came first?')
     const choices = el('div', 'game__choices')
@@ -79,14 +85,13 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
                 updateVoterList()
             },
             onVote: (voterId, msg) => {
-                if (msg.round === currentRound) {
-                    votesByVoter[voterId] = msg.cardId
-                    // Guard: reject unknown cardId
-                    if (!deck.cards.find((c) => c.id === msg.cardId)) return
-                    renderTally()
-                    if (shouldReveal(votesByVoter, connectedVoters.size)) {
-                        revealBtn.disabled = false
-                    }
+                // Validate BEFORE recording: only current-round votes for a card in the
+                // current hand count (rejects stale/forged raw messages).
+                if (revealed || !isAcceptableVote(msg, currentRound, hand)) return
+                votesByVoter[voterId] = msg.cardId
+                renderTally()
+                if (shouldReveal(votesByVoter, connectedVoters.size)) {
+                    revealBtn.disabled = false
                 }
             },
             onVoterJoin: (voterId, sendToVoter) => {
@@ -123,6 +128,11 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
                 connectedVoters.delete(voterId)
                 updateVoterList()
                 delete votesByVoter[voterId]
+                // A pending voter leaving lowers the denominator and can complete the
+                // round, so re-evaluate the reveal gate (it's only ever checked on a vote).
+                if (currentRound > 0 && !revealed && shouldReveal(votesByVoter, connectedVoters.size)) {
+                    revealBtn.disabled = false
+                }
             },
         })
     } catch (err) {
@@ -158,10 +168,16 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
         hub.broadcast({ t: 'round', round: currentRound, deckId: deck.id, cardIds: hand.map((c) => c.id), prompt: prompt.textContent })
         startBtn.style.display = 'none'
         revealBtn.disabled = true
+        forceBtn.disabled = false
+        forceBtn.style.display = 'inline-block'
         nextBtn.style.display = 'none'
     })
 
     revealBtn.addEventListener('click', () => {
+        revealRound()
+    })
+
+    forceBtn.addEventListener('click', () => {
         revealRound()
     })
 
@@ -175,6 +191,8 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
         renderRound()
         hub.broadcast({ t: 'round', round: currentRound, deckId: deck.id, cardIds: hand.map((c) => c.id), prompt: prompt.textContent })
         revealBtn.disabled = true
+        forceBtn.disabled = false
+        forceBtn.style.display = 'inline-block'
         nextBtn.style.display = 'none'
     })
 
@@ -231,11 +249,9 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
     }
 
     function revealRound() {
+        if (revealed) return
         const counts = tallyVotes(votesByVoter)
         const winnerCard = compareByValue(hand[0], hand[1], deck) <= 0 ? hand[0] : hand[1]
-
-        revealed = true
-        lastWinnerId = winnerCard.id
 
         revealed = true
         lastWinnerId = winnerCard.id
@@ -304,6 +320,8 @@ export async function hostLiveGame(root, deck, data, onMenu, opts = {}) {
         renderScoreboard()
         tally.replaceChildren()
         revealBtn.disabled = true
+        forceBtn.disabled = true
+        forceBtn.style.display = 'none'
         nextBtn.style.display = 'inline-block'
     }
 
